@@ -1,3 +1,12 @@
+st.markdown("""
+    <style>
+    [data-testid="stHeadingLink"] {
+        display: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+
 import streamlit as st
 import numpy as np
 from math import factorial
