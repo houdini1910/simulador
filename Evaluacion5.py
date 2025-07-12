@@ -178,7 +178,6 @@ with tabs[1]:
             st.write(resultados[:5])
             st.info(f"Media total: {np.mean(resultados):.4f}")
             st.info(f"Desviación estándar: {np.std(resultados):.4f}")
-            # Descarga simple
             st.download_button(
                 label="Descargar resultados (CSV)",
                 data=io.StringIO('\n'.join([','.join([str(x) for x in fila]) for fila in resultados])),
