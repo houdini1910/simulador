@@ -58,6 +58,7 @@ def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
     pdf.cell(200, 10, "Reporte de Simulación de Colas", ln=1, align='C')
     pdf.ln(10)
     for k, v in result_dict.items():
+        k = str(k).replace("λ", "lambda")  # <-- ESTA LÍNEA
         if k == "Distribución":
             pdf.cell(200, 8, "Distribución P(n) y acumulada:", ln=1)
             for i, (p, ac) in enumerate(v):
@@ -66,6 +67,7 @@ def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
             pdf.cell(200, 8, f"{k}: {round(v,4) if isinstance(v, float) else v}", ln=1)
     b = pdf.output(dest='S').encode('latin1')
     return b
+
 
 # ------ MANUAL ------
 def mostrar_manual():
