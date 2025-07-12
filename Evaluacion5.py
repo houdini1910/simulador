@@ -198,7 +198,6 @@ with tabs[2]:
         if seleccion:
             st.session_state.modelo_asist = seleccion
             st.session_state.paso = 2
-            st.experimental_rerun()
         for k, v in modelos.items():
             st.write(f"**{k}** — {v['desc']}")
             st.caption(v["ej"])
@@ -230,13 +229,11 @@ with tabs[2]:
                     res = {}
                 st.session_state.resultado_asistente = res
                 st.session_state.paso = 3
-                st.experimental_rerun()
             except Exception as ex:
                 st.error(f"Error: {ex}")
 
         if st.button("Volver al paso anterior"):
             st.session_state.paso = 1
-            st.experimental_rerun()
 
     # Paso 3: Mostrar resultados SOLO si existe resultado_asistente
     if st.session_state.paso == 3 and "resultado_asistente" in st.session_state:
@@ -255,7 +252,6 @@ with tabs[2]:
             st.session_state.paso = 1
             st.session_state.modelo_asist = None
             del st.session_state["resultado_asistente"]
-            st.experimental_rerun()
     elif st.session_state.paso == 3:
         st.warning("No hay resultados calculados. Por favor, vuelve a calcular un modelo.")
         if st.button("Volver a empezar"):
@@ -263,4 +259,4 @@ with tabs[2]:
             st.session_state.modelo_asist = None
             if "resultado_asistente" in st.session_state:
                 del st.session_state.resultado_asistente
-            st.experimental_rerun()
+
