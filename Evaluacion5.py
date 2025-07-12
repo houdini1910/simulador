@@ -96,7 +96,6 @@ def mostrar_manual():
 
     **3. Reportes:**
     - Puedes descargar tus resultados como PDF.
-    - ¡Si tienes dudas, revisa este manual o consulta a tu profesor!
 
     ---
     """)
