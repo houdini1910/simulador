@@ -166,7 +166,7 @@ with tabs[1]:
 with tabs[2]:
     st.header("Asistente Virtual - Modelos de Colas")
 
-    
+    # Inicialización segura
     if 'paso' not in st.session_state:
         st.session_state.paso = 1
     if 'lmbda_asist' not in st.session_state:
@@ -185,14 +185,12 @@ with tabs[2]:
             "Paso 1: Ingresa la tasa de llegada λ", min_value=0.01, value=st.session_state.lmbda_asist, key="lmbda_asist_input")
         if st.button("Siguiente", key="btn1"):
             st.session_state.paso = 2
-            st.experimental_rerun()
 
     if st.session_state.paso >= 2:
         st.session_state.mu_asist = st.number_input(
             "Paso 2: Ingresa la tasa de servicio μ", min_value=0.01, value=st.session_state.mu_asist, key="mu_asist_input")
         if st.button("Siguiente", key="btn2"):
             st.session_state.paso = 3
-            st.experimental_rerun()
 
     if st.session_state.paso >= 3:
         st.session_state.c_asist = st.number_input(
@@ -234,13 +232,12 @@ with tabs[2]:
 
     if st.button("Reiniciar Asistente"):
         st.session_state.paso = 1
-        # Opcional: reiniciar valores
         st.session_state.lmbda_asist = 1.0
         st.session_state.mu_asist = 2.0
         st.session_state.c_asist = 1
         st.session_state.limitar_asist = False
         st.session_state.k_asist = 4
-        st.experimental_rerun()
+
 
 
 # -------- PESTAÑA 4: AYUDA
