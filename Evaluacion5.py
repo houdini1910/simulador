@@ -149,11 +149,14 @@ with tabs[0]:
                     st.write(f"**{k}:** {round(v, 4) if isinstance(v, float) else v}")
             if resultado:
                 pdf_bytes = generar_pdf(resultado)
-                st.download_button(
-                    label="Descargar reporte en PDF",
-                    data=pdf_bytes,
-                    file_name="reporte_simulacion.pdf",
-                    mime="application/pdf"
+            csv_data = '\n'.join([','.join([str(x) for x in fila]) for fila in resultados])
+            st.download_button(
+                label="Descargar resultados (CSV)",
+                data=csv_data,   # <--- aquí ahora es string
+                file_name="resultados_montecarlo.csv",
+                mime="text/csv"
+)
+
                 )
         except Exception as ex:
             st.error(f"Error: {ex}")
