@@ -92,31 +92,31 @@ def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
 
 
 # ------ MANUAL ------
-def mostrar_manual():
-    st.markdown("""
-    ### Manual de Usuario
+# def mostrar_manual():
+#     st.markdown("""
+#     ### Manual de Usuario
 
-    **1. Modelos de Colas (M/M/1, M/M/c, M/M/c/K):**
-    - Introduce los valores de λ (tasa de llegada), μ (tasa de servicio), y servidores (c).
-    - Si tu modelo tiene capacidad limitada, marca la casilla y coloca el valor de K.
-    - Haz clic en "Calcular" para obtener resultados, o usa el "Asistente" para guía paso a paso.
+#     **1. Modelos de Colas (M/M/1, M/M/c, M/M/c/K):**
+#     - Introduce los valores de λ (tasa de llegada), μ (tasa de servicio), y servidores (c).
+#     - Si tu modelo tiene capacidad limitada, marca la casilla y coloca el valor de K.
+#     - Haz clic en "Calcular" para obtener resultados, o usa el "Asistente" para guía paso a paso.
 
-    **2. Simulación Monte Carlo (Poisson/Exponencial):**
-    - Ve a la pestaña "Simulación Monte Carlo".
-    - Elige la distribución (Poisson o Exponencial).
-    - Ingresa el parámetro λ, la cantidad de variables y de observaciones.
-    - Pulsa "Simular" para ver los resultados, media y desviación estándar.
+#     **2. Simulación Monte Carlo (Poisson/Exponencial):**
+#     - Ve a la pestaña "Simulación Monte Carlo".
+#     - Elige la distribución (Poisson o Exponencial).
+#     - Ingresa el parámetro λ, la cantidad de variables y de observaciones.
+#     - Pulsa "Simular" para ver los resultados, media y desviación estándar.
 
-    **3. Reportes:**
-    - Puedes descargar tus resultados como PDF.
+#     **3. Reportes:**
+#     - Puedes descargar tus resultados como PDF.
 
-    ---
-    """)
+#     ---
+#     """)
 
-# ------ INTERFAZ PRINCIPAL ------
-st.title("Simulador de Colas y Monte Carlo")
+# # ------ INTERFAZ PRINCIPAL ------
+# st.title("Simulador de Colas y Monte Carlo")
 
-tabs = st.tabs(["Modelos de Colas", "Simulación Monte Carlo", "Asistente", "Ayuda / Manual"])
+# tabs = st.tabs(["Modelos de Colas", "Simulación Monte Carlo", "Asistente", "Ayuda / Manual"])
 
 # -------- PESTAÑA 1: MODELOS CLÁSICOS
 with tabs[0]:
