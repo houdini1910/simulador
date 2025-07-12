@@ -182,7 +182,7 @@ with tabs[1]:
         except Exception as ex:
             st.error(f"Error: {ex}")
 
-# -------- PESTAÑA 3: ASISTENTE (wizard con selección de modelo)
+# -------- PESTAÑA 3: ASISTENTE (keys únicos para cada modelo)
 with tabs[2]:
     st.header("Asistente Virtual - Modelos de Colas")
     st.markdown("Sigue los pasos para resolver tu problema de colas.")
@@ -221,22 +221,27 @@ with tabs[2]:
             st.write(f"**{k}** — {v['desc']}")
             st.caption(v["ej"])
 
-    # PASO 2: Parámetros del modelo seleccionado
+    # PASO 2: Parámetros del modelo seleccionado (keys únicos por modelo)
     elif st.session_state.paso == 2:
         modelo = st.session_state.modelo_asist
         st.success(f"Modelo seleccionado: {modelo}")
-        lmbda = st.number_input("λ (Tasa de llegada)", min_value=0.01, value=1.0, format="%.2f", key="lmbda_asistente")
-        mu = st.number_input("μ (Tasa de servicio)", min_value=0.01, value=2.0, format="%.2f", key="mu_asistente")
+        lmbda_key = f"lmbda_{modelo}"
+        mu_key = f"mu_{modelo}"
+        c_key = f"c_{modelo}"
+        k_key = f"k_{modelo}"
+
+        lmbda = st.number_input("λ (Tasa de llegada)", min_value=0.01, value=1.0, format="%.2f", key=lmbda_key)
+        mu = st.number_input("μ (Tasa de servicio)", min_value=0.01, value=2.0, format="%.2f", key=mu_key)
         c = 1
         K = None
         if modelo in ["M/M/c", "M/M/c/K"]:
-            c = st.number_input("Cantidad de servidores (c)", min_value=1, value=2, step=1, key="c_asistente")
+            c = st.number_input("Cantidad de servidores (c)", min_value=1, value=2, step=1, key=c_key)
         if modelo in ["M/M/1/K", "M/M/c/K"]:
-            K = st.number_input("Capacidad total (K)", min_value=int(c), value=int(c)+3, step=1, key="k_asistente")
+            K = st.number_input("Capacidad total (K)", min_value=int(c), value=int(c)+3, step=1, key=k_key)
 
         col_b1, col_b2 = st.columns([1, 1])
-        calc_clicked = col_b1.button("Calcular resultado", key="btn_asistente_calc")
-        volver_clicked = col_b2.button("Volver al paso anterior", key="btn_asistente_volver")
+        calc_clicked = col_b1.button("Calcular resultado", key=f"btn_asistente_calc_{modelo}")
+        volver_clicked = col_b2.button("Volver al paso anterior", key=f"btn_asistente_volver_{modelo}")
 
         if calc_clicked:
             try:
@@ -259,6 +264,10 @@ with tabs[2]:
             st.session_state.modelo_asist = None
             if "resultado_asistente" in st.session_state:
                 del st.session_state["resultado_asistente"]
+            # Limpiar keys de widgets para evitar duplicados
+            for key in [lmbda_key, mu_key, c_key, k_key]:
+                if key in st.session_state:
+                    del st.session_state[key]
 
     # PASO 3: Mostrar resultados
     elif st.session_state.paso == 3 and "resultado_asistente" in st.session_state:
@@ -282,67 +291,6 @@ with tabs[2]:
     elif st.session_state.paso == 3:
         st.warning("No hay resultados calculados. Por favor, vuelve a calcular un modelo.")
         if st.button("Volver a empezar", key="btn_asistente_restart"):
-            st.session_state.paso = 1
-            st.session_state.modelo_asist = None
-            if "resultado_asistente" in st.session_state:
-                del st.session_state.resultado_asistente
-
-    
-    # Paso 2: Pedir parámetros según modelo
-    if st.session_state.paso == 2:
-        modelo = st.session_state.modelo_asist
-        st.success(f"Modelo seleccionado: {modelo}")
-        lmbda = st.number_input("λ (Tasa de llegada)", min_value=0.01, value=1.0, format="%.2f", key="lmbda_asistente")
-        mu = st.number_input("μ (Tasa de servicio)", min_value=0.01, value=2.0, format="%.2f", key="mu_asistente")
-        c = 1
-        K = None
-        if modelo in ["M/M/c", "M/M/c/K"]:
-            c = st.number_input("Cantidad de servidores (c)", min_value=1, value=2, step=1, key="c_asistente")
-        if modelo in ["M/M/1/K", "M/M/c/K"]:
-            K = st.number_input("Capacidad total (K)", min_value=int(c), value=int(c)+3, step=1, key="k_asistente")
-
-        if st.button("Calcular resultado", key="btn_asistente_calc"):
-            try:
-                if modelo == "M/M/1":
-                    res = calcular_mm1(lmbda, mu)
-                elif modelo == "M/M/c":
-                    res = calcular_mmc(lmbda, mu, int(c))
-                elif modelo == "M/M/1/K":
-                    res = calcular_mmck(lmbda, mu, 1, int(K))
-                elif modelo == "M/M/c/K":
-                    res = calcular_mmck(lmbda, mu, int(c), int(K))
-                else:
-                    res = {}
-                st.session_state.resultado_asistente = res
-                st.session_state.paso = 3
-            except Exception as ex:
-                st.error(f"Error: {ex}")
-
-        if st.button("Volver al paso anterior"):
-            st.session_state.paso = 1
-
-    # Paso 3: Mostrar resultados SOLO si existe resultado_asistente
-    if st.session_state.paso == 3 and "resultado_asistente" in st.session_state:
-        res = st.session_state.resultado_asistente
-        st.success("¡Cálculo realizado!")
-        for k, v in res.items():
-            nombre = EXPLICACIONES.get(k, k)
-            if k == "Distribucion":
-                st.markdown(f"**{nombre}:**")
-                st.table(
-                    [{"n": i, "P(n)": round(p,4), "Acumulada": round(ac,4)} for i, (p, ac) in enumerate(v)]
-                )
-            else:
-                valor = f"{v:.4f}" if isinstance(v, float) else v
-                st.markdown(f"**{nombre}:** {valor}")
-
-        if st.button("Realizar otro cálculo"):
-            st.session_state.paso = 1
-            st.session_state.modelo_asist = None
-            del st.session_state["resultado_asistente"]
-    elif st.session_state.paso == 3:
-        st.warning("No hay resultados calculados. Por favor, vuelve a calcular un modelo.")
-        if st.button("Volver a empezar"):
             st.session_state.paso = 1
             st.session_state.modelo_asist = None
             if "resultado_asistente" in st.session_state:
