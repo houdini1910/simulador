@@ -2,7 +2,6 @@ import streamlit as st
 import numpy as np
 from math import factorial
 from fpdf import FPDF
-import io
 
 st.set_page_config(page_title="Simulador de Colas y Monte Carlo", layout="centered")
 
@@ -14,7 +13,7 @@ def calcular_mm1(lmbda, mu):
     Ls = Lq + rho
     Wq = Lq / lmbda
     Ws = Ls / lmbda
-    return {"Modelo": "M/M/1", "λ": lmbda, "μ": mu, "ρ": rho, "P0": P0, "Lq": Lq, "Ls": Ls, "Wq": Wq, "Ws": Ws}
+    return {"Modelo": "M/M/1", "lambda": lmbda, "mu": mu, "rho": rho, "P0": P0, "Lq": Lq, "Ls": Ls, "Wq": Wq, "Ws": Ws}
 
 def calcular_mmc(lmbda, mu, c):
     rho = lmbda / (c * mu)
@@ -25,7 +24,7 @@ def calcular_mmc(lmbda, mu, c):
     Ls = Lq + c * rho
     Wq = Lq / lmbda
     Ws = Wq + 1/mu
-    return {"Modelo": f"M/M/{c}", "λ": lmbda, "μ": mu, "c": c, "ρ": rho, "P0": P0, "Lq": Lq, "Ls": Ls, "Wq": Wq, "Ws": Ws}
+    return {"Modelo": f"M/M/{c}", "lambda": lmbda, "mu": mu, "c": c, "rho": rho, "P0": P0, "Lq": Lq, "Ls": Ls, "Wq": Wq, "Ws": Ws}
 
 def calcular_mmck(lmbda, mu, c, K):
     rho_s = lmbda / mu
@@ -46,42 +45,36 @@ def calcular_mmck(lmbda, mu, c, K):
     for pn in P:
         total += pn
         cumul.append(total)
-    return {"Modelo": f"M/M/{c}/{K}", "λ": lmbda, "μ": mu, "c": c, "K": K, "ρ": rho_s / c,
+    return {"Modelo": f"M/M/{c}/{K}", "lambda": lmbda, "mu": mu, "c": c, "K": K, "rho": rho_s / c,
             "P0": P0, "Lq": Lq, "Ls": Ls, "Wq": Wq, "Ws": Ws,
-            "λ_eff": lambda_eff, "Distribución": list(zip(P, cumul))}
+            "lambda_eff": lambda_eff, "Distribucion": list(zip(P, cumul))}
 
-# ------ PDF GENERATION ------
+# ------ PDF GENERATION (formato bonito, sin símbolos griegos) ------
 def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
     pdf.cell(200, 10, "Reporte de Simulacion de Colas", ln=1, align='C')
     pdf.ln(8)
-    # Primero los datos generales
+    # Datos generales
     for k, v in result_dict.items():
-        k_str = str(k)
-        k_str = k_str.replace("λ", "lambda").replace("μ", "mu").replace("ρ", "rho")
-        k_str = (k_str.replace("ó","o").replace("é","e").replace("á","a")
-                        .replace("í","i").replace("ú","u").replace("ñ","n"))
-        if k_str != "Distribucion" and k_str != "Distribución":
+        if k != "Distribucion":
             if isinstance(v, float):
                 v_str = f"{v:.4f}"
             else:
                 v_str = str(v)
-            pdf.cell(0, 8, f"{k_str}: {v_str}", ln=1)
+            pdf.cell(0, 8, f"{k}: {v_str}", ln=1)
     pdf.ln(5)
-    # Ahora la tabla de distribucion
-    if "Distribucion" in result_dict or "Distribución" in result_dict:
-        dist = result_dict.get("Distribucion") or result_dict.get("Distribución")
+    # Tabla de Distribucion
+    if "Distribucion" in result_dict:
+        dist = result_dict["Distribucion"]
         pdf.set_font("Arial", size=11, style='B')
         pdf.cell(0, 8, "Distribucion P(n) y acumulada:", ln=1)
         pdf.set_font("Arial", size=11)
-        # Cabecera
         pdf.cell(20, 8, "n", border=1)
         pdf.cell(40, 8, "P(n)", border=1)
         pdf.cell(40, 8, "Acumulada", border=1)
         pdf.ln()
-        # Filas
         for i, (p, ac) in enumerate(dist):
             pdf.cell(20, 8, f"{i}", border=1)
             pdf.cell(40, 8, f"{p:.4f}", border=1)
@@ -90,33 +83,10 @@ def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
     b = pdf.output(dest='S').encode('latin1')
     return b
 
+# ------ INTERFAZ PRINCIPAL ------
+st.title("Simulador de Colas y Monte Carlo")
 
-# ------ MANUAL ------
-# def mostrar_manual():
-#     st.markdown("""
-#     ### Manual de Usuario
-
-#     **1. Modelos de Colas (M/M/1, M/M/c, M/M/c/K):**
-#     - Introduce los valores de λ (tasa de llegada), μ (tasa de servicio), y servidores (c).
-#     - Si tu modelo tiene capacidad limitada, marca la casilla y coloca el valor de K.
-#     - Haz clic en "Calcular" para obtener resultados, o usa el "Asistente" para guía paso a paso.
-
-#     **2. Simulación Monte Carlo (Poisson/Exponencial):**
-#     - Ve a la pestaña "Simulación Monte Carlo".
-#     - Elige la distribución (Poisson o Exponencial).
-#     - Ingresa el parámetro λ, la cantidad de variables y de observaciones.
-#     - Pulsa "Simular" para ver los resultados, media y desviación estándar.
-
-#     **3. Reportes:**
-#     - Puedes descargar tus resultados como PDF.
-
-#     ---
-#     """)
-
-# # ------ INTERFAZ PRINCIPAL ------
-# st.title("Simulador de Colas y Monte Carlo")
-
-# tabs = st.tabs(["Modelos de Colas", "Simulación Monte Carlo", "Asistente", "Ayuda / Manual"])
+tabs = st.tabs(["Modelos de Colas", "Simulación Monte Carlo", "Asistente"])
 
 # -------- PESTAÑA 1: MODELOS CLÁSICOS
 with tabs[0]:
@@ -140,7 +110,7 @@ with tabs[0]:
                 resultado = calcular_mm1(lmbda, mu) if int(c) == 1 else calcular_mmc(lmbda, mu, int(c))
             st.success("¡Cálculo realizado con éxito!")
             for k, v in resultado.items():
-                if k == "Distribución":
+                if k == "Distribucion":
                     st.write("**Distribución P(n) y acumulada:**")
                     st.table(
                         [{"n": i, "P(n)": round(p,4), "Acumulada": round(ac,4)} for i, (p, ac) in enumerate(v)]
@@ -149,12 +119,11 @@ with tabs[0]:
                     st.write(f"**{k}:** {round(v, 4) if isinstance(v, float) else v}")
             if resultado:
                 pdf_bytes = generar_pdf(resultado)
-                csv_data = '\n'.join([','.join([str(x) for x in fila]) for fila in resultados])
                 st.download_button(
-                    label="Descargar resultados (CSV)",
-                    data=csv_data,
-                    file_name="resultados_montecarlo.csv",
-                    mime="text/csv"
+                    label="Descargar reporte en PDF",
+                    data=pdf_bytes,
+                    file_name="reporte_simulacion.pdf",
+                    mime="application/pdf"
                 )
         except Exception as ex:
             st.error(f"Error: {ex}")
@@ -169,7 +138,6 @@ with tabs[1]:
     
     if st.button("Simular Monte Carlo"):
         try:
-            # Generar resultados según la distribución seleccionada
             if dist == "Poisson":
                 resultados = np.random.poisson(lmbda_mc, size=(n_obs, n_vars))
             else:
@@ -181,7 +149,6 @@ with tabs[1]:
             st.info(f"Media total: {np.mean(resultados):.4f}")
             st.info(f"Desviación estándar: {np.std(resultados):.4f}")
 
-            # ---- Generar CSV con encabezados ----
             encabezado = ','.join([f"Var{i+1}" for i in range(resultados.shape[1])])
             lineas = [encabezado]
             for fila in resultados:
@@ -197,8 +164,7 @@ with tabs[1]:
         except Exception as ex:
             st.error(f"Error: {ex}")
 
-
-# -------- PESTAÑA 3: ASISTENTE 
+# -------- PESTAÑA 3: ASISTENTE (Wizard paso a paso)
 with tabs[2]:
     st.header("Asistente Virtual - Modelos de Colas")
 
@@ -256,7 +222,7 @@ with tabs[2]:
                     )
                 st.success("¡Cálculo realizado!")
                 for k, v in res.items():
-                    if k == "Distribución":
+                    if k == "Distribucion":
                         st.write("**Distribución P(n) y acumulada:**")
                         st.table(
                             [{"n": i, "P(n)": round(p,4), "Acumulada": round(ac,4)} for i, (p, ac) in enumerate(v)]
@@ -273,9 +239,3 @@ with tabs[2]:
         st.session_state.c_asist = 1
         st.session_state.limitar_asist = False
         st.session_state.k_asist = 4
-
-
-
-# -------- PESTAÑA 4: AYUDA
-# with tabs[3]:
-    # mostrar_manual()
