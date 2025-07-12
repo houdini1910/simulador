@@ -58,13 +58,22 @@ def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
     pdf.cell(200, 10, "Reporte de Simulación de Colas", ln=1, align='C')
     pdf.ln(10)
     for k, v in result_dict.items():
-        k = str(k).replace("λ", "lambda")  # <-- ESTA LÍNEA
-        if k == "Distribución":
-            pdf.cell(200, 8, "Distribución P(n) y acumulada:", ln=1)
+        # Reemplazar TODOS los caracteres unicode que pueden fallar
+        k_str = str(k)
+        k_str = k_str.replace("λ", "lambda")
+        k_str = k_str.replace("μ", "mu")
+        k_str = k_str.replace("ó", "o")
+        k_str = k_str.replace("é", "e")
+        k_str = k_str.replace("á", "a")
+        k_str = k_str.replace("í", "i")
+        k_str = k_str.replace("ú", "u")
+        k_str = k_str.replace("ñ", "n")
+        if k_str == "Distribución":
+            pdf.cell(200, 8, "Distribucion P(n) y acumulada:", ln=1)
             for i, (p, ac) in enumerate(v):
                 pdf.cell(200, 8, f"n={i}: P={round(p,4)}, Acumulada={round(ac,4)}", ln=1)
         else:
-            pdf.cell(200, 8, f"{k}: {round(v,4) if isinstance(v, float) else v}", ln=1)
+            pdf.cell(200, 8, f"{k_str}: {round(v,4) if isinstance(v, float) else v}", ln=1)
     b = pdf.output(dest='S').encode('latin1')
     return b
 
