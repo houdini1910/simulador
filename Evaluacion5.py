@@ -10,7 +10,7 @@ EXPLICACIONES = {
     "mu": "μ — Tasa de servicio (clientes atendidos por servidor por unidad de tiempo)",
     "c": "c — Número de servidores",
     "K": "K — Capacidad máxima total del sistema (incluye en servicio y en cola)",
-    "rho": "ρ — Utilización del sistema",
+    "rho": "ρ — Utilización del sistema (porcentaje de tiempo ocupado)",
     "P0": "P₀ — Probabilidad de que no haya clientes en el sistema",
     "Lq": "Lq — Número promedio de clientes en la cola",
     "Ls": "Ls — Número promedio de clientes en el sistema (cola + servicio)",
@@ -104,7 +104,7 @@ st.title("Simulador de Colas y Monte Carlo")
 
 tabs = st.tabs(["Modelos de Colas", "Simulación Monte Carlo", "Asistente"])
 
-# -------- PESTAÑA 1: MODELOS CLÁSICOS
+# -------- PESTAÑA 1: MODELOS CLÁSICOS (igual que antes)
 with tabs[0]:
     st.header("Simulación de Modelos de Colas")
     lmbda = st.number_input("λ (Tasa de llegada)", min_value=0.01, value=1.5, format="%.2f")
@@ -146,7 +146,7 @@ with tabs[0]:
         except Exception as ex:
             st.error(f"Error: {ex}")
 
-# -------- PESTAÑA 2: MONTE CARLO
+# -------- PESTAÑA 2: MONTE CARLO (igual que antes)
 with tabs[1]:
     st.header("Simulación de Monte Carlo (Poisson / Exponencial)")
     dist = st.radio("Selecciona la distribución", ["Poisson", "Exponencial"])
@@ -182,116 +182,209 @@ with tabs[1]:
         except Exception as ex:
             st.error(f"Error: {ex}")
 
-# -------- PESTAÑA 3: ASISTENTE (keys únicos para cada modelo)
+# -------- PESTAÑA 3: ASISTENTE MEJORADO PASO A PASO Y HUMANO
+
 with tabs[2]:
-    st.header("Asistente Virtual - Modelos de Colas")
-    st.markdown("Sigue los pasos para resolver tu problema de colas.")
+    st.markdown("<h2 style='color:#0099ff'>Asistente Virtual 🤖</h2>", unsafe_allow_html=True)
+    st.markdown("> **¡Resuelve tu problema de colas paso a paso!**\n")
 
     modelos = {
-        "M/M/1": {"desc": "Un servidor, cola infinita", "ej": "Ideal para: Un cajero, un médico, un mecánico"},
-        "M/M/1/K": {"desc": "Un servidor, capacidad limitada", "ej": "Ideal para: Sala de espera con asientos limitados"},
-        "M/M/c": {"desc": "Múltiples servidores, cola infinita", "ej": "Ideal para: Múltiples cajeros, varios médicos"},
-        "M/M/c/K": {"desc": "Múltiples servidores, capacidad limitada", "ej": "Ideal para: Call center con líneas limitadas"}
+        "M/M/1": {
+            "desc": "Un solo servidor, cola ilimitada.",
+            "ej": "🧑‍💼 Ejemplo: Un cajero atendiendo en un banco sin límite de espera."
+        },
+        "M/M/1/K": {
+            "desc": "Un solo servidor, capacidad limitada.",
+            "ej": "🪑 Ejemplo: Sala de espera con solo 5 asientos."
+        },
+        "M/M/c": {
+            "desc": "Varios servidores, cola ilimitada.",
+            "ej": "🏢 Ejemplo: 3 médicos atendiendo pacientes en una clínica."
+        },
+        "M/M/c/K": {
+            "desc": "Varios servidores, capacidad limitada.",
+            "ej": "📞 Ejemplo: 5 líneas en un call center con máximo 10 personas en total."
+        }
     }
 
-    if 'paso' not in st.session_state:
-        st.session_state.paso = 1
-    if 'modelo_asist' not in st.session_state:
-        st.session_state.modelo_asist = None
+    # Variables de control de paso
+    if 'asist_paso' not in st.session_state:
+        st.session_state.asist_paso = 1
+    if 'asist_modelo' not in st.session_state:
+        st.session_state.asist_modelo = None
+    if 'asist_lambda' not in st.session_state:
+        st.session_state.asist_lambda = None
+    if 'asist_mu' not in st.session_state:
+        st.session_state.asist_mu = None
+    if 'asist_c' not in st.session_state:
+        st.session_state.asist_c = None
+    if 'asist_K' not in st.session_state:
+        st.session_state.asist_K = None
+    if 'asist_result' not in st.session_state:
+        st.session_state.asist_result = None
 
-    # PASO 1: Selección de modelo
-    if st.session_state.paso == 1:
-        st.subheader("Paso 1: Selecciona el tipo de modelo")
-        cols = st.columns(2)
-        seleccion = None
-        if cols[0].button("M/M/1", key="btn_mm1"):
-            seleccion = "M/M/1"
-        if cols[1].button("M/M/1/K", key="btn_mm1k"):
-            seleccion = "M/M/1/K"
-        if cols[0].button("M/M/c", key="btn_mmc"):
-            seleccion = "M/M/c"
-        if cols[1].button("M/M/c/K", key="btn_mmck"):
-            seleccion = "M/M/c/K"
-        if seleccion:
-            st.session_state.modelo_asist = seleccion
-            st.session_state.paso = 2
-            if "resultado_asistente" in st.session_state:
-                del st.session_state["resultado_asistente"]
-        for k, v in modelos.items():
-            st.write(f"**{k}** — {v['desc']}")
-            st.caption(v["ej"])
+    # Paso 1: Modelo
+    if st.session_state.asist_paso == 1:
+        st.subheader("1️⃣ Selecciona el tipo de modelo")
+        for nombre, data in modelos.items():
+            if st.button(f"Elegir {nombre}"):
+                st.session_state.asist_modelo = nombre
+                st.session_state.asist_paso = 2
+                st.session_state.asist_lambda = None
+                st.session_state.asist_mu = None
+                st.session_state.asist_c = None
+                st.session_state.asist_K = None
+                st.session_state.asist_result = None
+        for nombre, data in modelos.items():
+            st.markdown(
+                f"<div style='background-color:#e0f7fa; padding:12px; margin-bottom:6px; border-radius:8px;'>"
+                f"<b style='color:#008080;'>{nombre}</b>: {data['desc']}<br>"
+                f"<span style='color:#0099ff'>{data['ej']}</span></div>", unsafe_allow_html=True)
+        st.info("💡 Elige el modelo que más se parece a tu situación real.")
 
-    # PASO 2: Parámetros del modelo seleccionado (keys únicos por modelo)
-    elif st.session_state.paso == 2:
-        modelo = st.session_state.modelo_asist
-        st.success(f"Modelo seleccionado: {modelo}")
-        lmbda_key = f"lmbda_{modelo}"
-        mu_key = f"mu_{modelo}"
-        c_key = f"c_{modelo}"
-        k_key = f"k_{modelo}"
+    # Paso 2: Lambda
+    elif st.session_state.asist_paso == 2:
+        st.subheader("2️⃣ Ingresa la tasa de llegada λ")
+        st.markdown("""
+        <div style='color:#00695c;'>
+        <b>¿Qué es λ?</b> Es el <b>número promedio de clientes</b> que llegan por unidad de tiempo.<br>
+        <b>Ejemplo:</b> Si cada 2 minutos llegan 4 personas, entonces λ = 2 por minuto.
+        <br><br>
+        <b style='color:#ff9800;'>TIP:</b> Piensa: ¿cuántos clientes nuevos llegan en 1 hora? Divide por 60 si quieres el valor por minuto.
+        </div>
+        """, unsafe_allow_html=True)
+        val = st.number_input("λ (tasa de llegada)", min_value=0.01, value=1.0, format="%.2f", key="asist_lambda")
+        col1, col2 = st.columns(2)
+        if col1.button("Siguiente ➡️", key="asist_siguiente_lambda"):
+            st.session_state.asist_lambda = val
+            st.session_state.asist_paso = 3
+        if col2.button("⬅️ Volver", key="asist_volver_modelo"):
+            st.session_state.asist_paso = 1
 
-        lmbda = st.number_input("λ (Tasa de llegada)", min_value=0.01, value=1.0, format="%.2f", key=lmbda_key)
-        mu = st.number_input("μ (Tasa de servicio)", min_value=0.01, value=2.0, format="%.2f", key=mu_key)
-        c = 1
-        K = None
-        if modelo in ["M/M/c", "M/M/c/K"]:
-            c = st.number_input("Cantidad de servidores (c)", min_value=1, value=2, step=1, key=c_key)
-        if modelo in ["M/M/1/K", "M/M/c/K"]:
-            K = st.number_input("Capacidad total (K)", min_value=int(c), value=int(c)+3, step=1, key=k_key)
-
-        col_b1, col_b2 = st.columns([1, 1])
-        calc_clicked = col_b1.button("Calcular resultado", key=f"btn_asistente_calc_{modelo}")
-        volver_clicked = col_b2.button("Volver al paso anterior", key=f"btn_asistente_volver_{modelo}")
-
-        if calc_clicked:
-            try:
-                if modelo == "M/M/1":
-                    res = calcular_mm1(lmbda, mu)
-                elif modelo == "M/M/c":
-                    res = calcular_mmc(lmbda, mu, int(c))
-                elif modelo == "M/M/1/K":
-                    res = calcular_mmck(lmbda, mu, 1, int(K))
-                elif modelo == "M/M/c/K":
-                    res = calcular_mmck(lmbda, mu, int(c), int(K))
-                else:
-                    res = {}
-                st.session_state.resultado_asistente = res
-                st.session_state.paso = 3
-            except Exception as ex:
-                st.error(f"Error: {ex}")
-        if volver_clicked:
-            st.session_state.paso = 1
-            st.session_state.modelo_asist = None
-            if "resultado_asistente" in st.session_state:
-                del st.session_state["resultado_asistente"]
-            # Limpiar keys de widgets para evitar duplicados
-            for key in [lmbda_key, mu_key, c_key, k_key]:
-                if key in st.session_state:
-                    del st.session_state[key]
-
-    # PASO 3: Mostrar resultados
-    elif st.session_state.paso == 3 and "resultado_asistente" in st.session_state:
-        res = st.session_state.resultado_asistente
-        st.success("¡Cálculo realizado!")
-        for k, v in res.items():
-            nombre = EXPLICACIONES.get(k, k)
-            if k == "Distribucion":
-                st.markdown(f"**{nombre}:**")
-                st.table(
-                    [{"n": i, "P(n)": round(p,4), "Acumulada": round(ac,4)} for i, (p, ac) in enumerate(v)]
-                )
+    # Paso 3: Mu
+    elif st.session_state.asist_paso == 3:
+        st.subheader("3️⃣ Ingresa la tasa de servicio μ")
+        st.markdown("""
+        <div style='color:#1a237e;'>
+        <b>¿Qué es μ?</b> Es el <b>número promedio de clientes</b> que un servidor puede atender por unidad de tiempo.<br>
+        <b>Ejemplo:</b> Si cada médico atiende 5 personas por hora, entonces μ = 5 por hora.<br>
+        <b style='color:#ff9800;'>TIP:</b> Si hay varios servidores y atienden igual, pon la tasa individual aquí. Si no, elige el modelo c adecuado y lo sumas después.
+        </div>
+        """, unsafe_allow_html=True)
+        val = st.number_input("μ (tasa de servicio)", min_value=0.01, value=2.0, format="%.2f", key="asist_mu")
+        col1, col2 = st.columns(2)
+        if col1.button("Siguiente ➡️", key="asist_siguiente_mu"):
+            st.session_state.asist_mu = val
+            if st.session_state.asist_modelo in ["M/M/c", "M/M/c/K"]:
+                st.session_state.asist_paso = 4
+            elif st.session_state.asist_modelo == "M/M/1/K":
+                st.session_state.asist_paso = 5
             else:
-                valor = f"{v:.4f}" if isinstance(v, float) else v
-                st.markdown(f"**{nombre}:** {valor}")
+                st.session_state.asist_paso = 6
+        if col2.button("⬅️ Volver", key="asist_volver_lambda"):
+            st.session_state.asist_paso = 2
 
-        if st.button("Realizar otro cálculo", key="btn_asistente_nuevo"):
-            st.session_state.paso = 1
-            st.session_state.modelo_asist = None
-            del st.session_state["resultado_asistente"]
-    elif st.session_state.paso == 3:
-        st.warning("No hay resultados calculados. Por favor, vuelve a calcular un modelo.")
-        if st.button("Volver a empezar", key="btn_asistente_restart"):
-            st.session_state.paso = 1
-            st.session_state.modelo_asist = None
-            if "resultado_asistente" in st.session_state:
-                del st.session_state.resultado_asistente
+    # Paso 4: c (servidores)
+    elif st.session_state.asist_paso == 4:
+        st.subheader("4️⃣ Ingresa la cantidad de servidores c")
+        st.markdown("""
+        <div style='color:#bf360c;'>
+        <b>¿Qué es c?</b> Es el <b>número de servidores o puestos</b> que atienden simultáneamente.<br>
+        <b>Ejemplo:</b> 4 ventanillas en un banco, c = 4.<br>
+        <b style='color:#ff9800;'>TIP:</b> Si tienes un solo servidor, pon c=1 y te recomendamos usar M/M/1.
+        </div>
+        """, unsafe_allow_html=True)
+        val = st.number_input("Cantidad de servidores (c)", min_value=1, value=2, step=1, key="asist_c")
+        col1, col2 = st.columns(2)
+        if col1.button("Siguiente ➡️", key="asist_siguiente_c"):
+            st.session_state.asist_c = val
+            if st.session_state.asist_modelo == "M/M/c/K":
+                st.session_state.asist_paso = 5
+            else:
+                st.session_state.asist_paso = 6
+        if col2.button("⬅️ Volver", key="asist_volver_mu"):
+            st.session_state.asist_paso = 3
+
+    # Paso 5: K (capacidad máxima)
+    elif st.session_state.asist_paso == 5:
+        st.subheader("5️⃣ Ingresa la capacidad máxima del sistema K")
+        st.markdown("""
+        <div style='color:#33691e;'>
+        <b>¿Qué es K?</b> Es el <b>máximo número de personas</b> que pueden estar en el sistema (esperando + en servicio).<br>
+        <b>Ejemplo:</b> 1 cajero y 5 sillas: K = 6.<br>
+        <b style='color:#ff9800;'>TIP:</b> Si no hay límite, usa los modelos sin K.
+        </div>
+        """, unsafe_allow_html=True)
+        min_c = int(st.session_state.asist_c) if st.session_state.asist_c else 1
+        val = st.number_input("Capacidad total (K)", min_value=min_c, value=min_c + 3, step=1, key="asist_K")
+        col1, col2 = st.columns(2)
+        if col1.button("Siguiente ➡️", key="asist_siguiente_K"):
+            st.session_state.asist_K = val
+            st.session_state.asist_paso = 6
+        if col2.button("⬅️ Volver", key="asist_volver_cK"):
+            if st.session_state.asist_modelo == "M/M/1/K":
+                st.session_state.asist_paso = 3
+            else:
+                st.session_state.asist_paso = 4
+
+    # Paso 6: Resultados
+    elif st.session_state.asist_paso == 6:
+        st.markdown("<h3 style='color:#43a047'>Resultados y análisis 📊</h3>", unsafe_allow_html=True)
+        modelo = st.session_state.asist_modelo
+        lmbda = float(st.session_state.asist_lambda)
+        mu = float(st.session_state.asist_mu)
+        c = int(st.session_state.asist_c) if st.session_state.asist_c else 1
+        K = int(st.session_state.asist_K) if st.session_state.asist_K else None
+        resultado = None
+        try:
+            if modelo == "M/M/1":
+                resultado = calcular_mm1(lmbda, mu)
+            elif modelo == "M/M/c":
+                resultado = calcular_mmc(lmbda, mu, int(c))
+            elif modelo == "M/M/1/K":
+                resultado = calcular_mmck(lmbda, mu, 1, int(K))
+            elif modelo == "M/M/c/K":
+                resultado = calcular_mmck(lmbda, mu, int(c), int(K))
+            if resultado:
+                st.success("¡Cálculo realizado con éxito! Mira el significado de cada resultado 👇")
+                for k, v in resultado.items():
+                    nombre = EXPLICACIONES.get(k, k)
+                    if k == "Distribucion":
+                        st.markdown(f"**{nombre}:**")
+                        st.table(
+                            [{"n": i, "P(n)": round(p,4), "Acumulada": round(ac,4)} for i, (p, ac) in enumerate(v)]
+                        )
+                    else:
+                        valor = f"{v:.4f}" if isinstance(v, float) else v
+                        st.markdown(
+                            f"<div style='background-color:#f1f8e9; border-radius:8px; margin-bottom:4px;'>"
+                            f"<b style='color:#388e3c'>{nombre}</b>: <span style='color:#1976d2'>{valor}</span></div>",
+                            unsafe_allow_html=True
+                        )
+                pdf_bytes = generar_pdf(resultado)
+                st.download_button(
+                    label="Descargar reporte en PDF",
+                    data=pdf_bytes,
+                    file_name="reporte_simulacion.pdf",
+                    mime="application/pdf"
+                )
+        except Exception as ex:
+            st.error(f"Error en el cálculo: {ex}")
+        col1, col2 = st.columns(2)
+        if col1.button("Nuevo cálculo", key="asist_nuevo"):
+            st.session_state.asist_paso = 1
+            st.session_state.asist_modelo = None
+            st.session_state.asist_lambda = None
+            st.session_state.asist_mu = None
+            st.session_state.asist_c = None
+            st.session_state.asist_K = None
+            st.session_state.asist_result = None
+        if col2.button("⬅️ Volver al último dato", key="asist_volver_result"):
+            if modelo in ["M/M/1"]:
+                st.session_state.asist_paso = 3
+            elif modelo == "M/M/c":
+                st.session_state.asist_paso = 4
+            elif modelo == "M/M/1/K":
+                st.session_state.asist_paso = 5
+            elif modelo == "M/M/c/K":
+                st.session_state.asist_paso = 5
