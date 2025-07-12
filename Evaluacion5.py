@@ -156,7 +156,6 @@ with tabs[0]:
                     file_name="resultados_montecarlo.csv",
                     mime="text/csv"
                 )
-            )
         except Exception as ex:
             st.error(f"Error: {ex}")
 
