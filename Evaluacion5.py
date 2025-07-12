@@ -203,7 +203,7 @@ with tabs[2]:
     if st.session_state.paso == 1:
         st.subheader("Paso 1: Selecciona el tipo de modelo")
         cols = st.columns(2)
-        seleccion = st.session_state.get("seleccion_modelo", None)
+        seleccion = None
         if cols[0].button("M/M/1", key="btn_mm1"):
             seleccion = "M/M/1"
         if cols[1].button("M/M/1/K", key="btn_mm1k"):
@@ -215,11 +215,8 @@ with tabs[2]:
         if seleccion:
             st.session_state.modelo_asist = seleccion
             st.session_state.paso = 2
-            # Limpia resultados si los hubiera
             if "resultado_asistente" in st.session_state:
                 del st.session_state["resultado_asistente"]
-            st.session_state.seleccion_modelo = None
-            st.experimental_rerun()
         for k, v in modelos.items():
             st.write(f"**{k}** — {v['desc']}")
             st.caption(v["ej"])
@@ -262,7 +259,6 @@ with tabs[2]:
             st.session_state.modelo_asist = None
             if "resultado_asistente" in st.session_state:
                 del st.session_state["resultado_asistente"]
-            st.experimental_rerun()
 
     # PASO 3: Mostrar resultados
     elif st.session_state.paso == 3 and "resultado_asistente" in st.session_state:
