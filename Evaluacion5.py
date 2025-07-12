@@ -199,28 +199,98 @@ with tabs[2]:
     if 'modelo_asist' not in st.session_state:
         st.session_state.modelo_asist = None
 
+    # PASO 1: Selección de modelo
     if st.session_state.paso == 1:
         st.subheader("Paso 1: Selecciona el tipo de modelo")
         cols = st.columns(2)
-        seleccion = None
-        with cols[0]:
-            if st.button("M/M/1"):
-                seleccion = "M/M/1"
-        with cols[1]:
-            if st.button("M/M/1/K"):
-                seleccion = "M/M/1/K"
-        with cols[0]:
-            if st.button("M/M/c"):
-                seleccion = "M/M/c"
-        with cols[1]:
-            if st.button("M/M/c/K"):
-                seleccion = "M/M/c/K"
+        seleccion = st.session_state.get("seleccion_modelo", None)
+        if cols[0].button("M/M/1", key="btn_mm1"):
+            seleccion = "M/M/1"
+        if cols[1].button("M/M/1/K", key="btn_mm1k"):
+            seleccion = "M/M/1/K"
+        if cols[0].button("M/M/c", key="btn_mmc"):
+            seleccion = "M/M/c"
+        if cols[1].button("M/M/c/K", key="btn_mmck"):
+            seleccion = "M/M/c/K"
         if seleccion:
             st.session_state.modelo_asist = seleccion
             st.session_state.paso = 2
+            # Limpia resultados si los hubiera
+            if "resultado_asistente" in st.session_state:
+                del st.session_state["resultado_asistente"]
+            st.session_state.seleccion_modelo = None
+            st.experimental_rerun()
         for k, v in modelos.items():
             st.write(f"**{k}** — {v['desc']}")
             st.caption(v["ej"])
+
+    # PASO 2: Parámetros del modelo seleccionado
+    elif st.session_state.paso == 2:
+        modelo = st.session_state.modelo_asist
+        st.success(f"Modelo seleccionado: {modelo}")
+        lmbda = st.number_input("λ (Tasa de llegada)", min_value=0.01, value=1.0, format="%.2f", key="lmbda_asistente")
+        mu = st.number_input("μ (Tasa de servicio)", min_value=0.01, value=2.0, format="%.2f", key="mu_asistente")
+        c = 1
+        K = None
+        if modelo in ["M/M/c", "M/M/c/K"]:
+            c = st.number_input("Cantidad de servidores (c)", min_value=1, value=2, step=1, key="c_asistente")
+        if modelo in ["M/M/1/K", "M/M/c/K"]:
+            K = st.number_input("Capacidad total (K)", min_value=int(c), value=int(c)+3, step=1, key="k_asistente")
+
+        col_b1, col_b2 = st.columns([1, 1])
+        calc_clicked = col_b1.button("Calcular resultado", key="btn_asistente_calc")
+        volver_clicked = col_b2.button("Volver al paso anterior", key="btn_asistente_volver")
+
+        if calc_clicked:
+            try:
+                if modelo == "M/M/1":
+                    res = calcular_mm1(lmbda, mu)
+                elif modelo == "M/M/c":
+                    res = calcular_mmc(lmbda, mu, int(c))
+                elif modelo == "M/M/1/K":
+                    res = calcular_mmck(lmbda, mu, 1, int(K))
+                elif modelo == "M/M/c/K":
+                    res = calcular_mmck(lmbda, mu, int(c), int(K))
+                else:
+                    res = {}
+                st.session_state.resultado_asistente = res
+                st.session_state.paso = 3
+            except Exception as ex:
+                st.error(f"Error: {ex}")
+        if volver_clicked:
+            st.session_state.paso = 1
+            st.session_state.modelo_asist = None
+            if "resultado_asistente" in st.session_state:
+                del st.session_state["resultado_asistente"]
+            st.experimental_rerun()
+
+    # PASO 3: Mostrar resultados
+    elif st.session_state.paso == 3 and "resultado_asistente" in st.session_state:
+        res = st.session_state.resultado_asistente
+        st.success("¡Cálculo realizado!")
+        for k, v in res.items():
+            nombre = EXPLICACIONES.get(k, k)
+            if k == "Distribucion":
+                st.markdown(f"**{nombre}:**")
+                st.table(
+                    [{"n": i, "P(n)": round(p,4), "Acumulada": round(ac,4)} for i, (p, ac) in enumerate(v)]
+                )
+            else:
+                valor = f"{v:.4f}" if isinstance(v, float) else v
+                st.markdown(f"**{nombre}:** {valor}")
+
+        if st.button("Realizar otro cálculo", key="btn_asistente_nuevo"):
+            st.session_state.paso = 1
+            st.session_state.modelo_asist = None
+            del st.session_state["resultado_asistente"]
+    elif st.session_state.paso == 3:
+        st.warning("No hay resultados calculados. Por favor, vuelve a calcular un modelo.")
+        if st.button("Volver a empezar", key="btn_asistente_restart"):
+            st.session_state.paso = 1
+            st.session_state.modelo_asist = None
+            if "resultado_asistente" in st.session_state:
+                del st.session_state.resultado_asistente
+
     
     # Paso 2: Pedir parámetros según modelo
     if st.session_state.paso == 2:
