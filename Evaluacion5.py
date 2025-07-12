@@ -107,8 +107,8 @@ tabs = st.tabs(["Modelos de Colas", "Simulación Monte Carlo", "Asistente"])
 # -------- PESTAÑA 1: MODELOS CLÁSICOS
 with tabs[0]:
     st.header("Simulación de Modelos de Colas")
-    lmbda = st.number_input("λ (Tasa de llegada)", min_value=0.01, value=1.5, format="%.2f")
-    mu = st.number_input("μ (Tasa de servicio)", min_value=0.01, value=2.5, format="%.2f")
+    lmbda = st.number_input("lambda (Tasa de llegada)", min_value=0.01, value=1.5, format="%.2f")
+    mu = st.number_input("mu (Tasa de servicio)", min_value=0.01, value=2.5, format="%.2f")
     c = st.number_input("Cantidad de servidores (c)", min_value=1, step=1, value=1)
 
     limitar = st.checkbox("Limitar capacidad de la cola (M/M/c/K)")
@@ -146,11 +146,11 @@ with tabs[0]:
         except Exception as ex:
             st.error(f"Error: {ex}")
 
-# -------- PESTAÑA 2: MONTE CARLO (igual que antes)
+# -------- PESTAÑA 2: MONTE CARLO
 with tabs[1]:
     st.header("Simulación de Monte Carlo (Poisson / Exponencial)")
     dist = st.radio("Selecciona la distribución", ["Poisson", "Exponencial"])
-    lmbda_mc = st.number_input("λ (tasa promedio)", min_value=0.01, value=1.0, format="%.2f")
+    lmbda_mc = st.number_input("lambda (tasa promedio)", min_value=0.01, value=1.0, format="%.2f")
     n_vars = st.number_input("Cantidad de variables a simular", min_value=1, value=5)
     n_obs = st.number_input("Cantidad de observaciones", min_value=1, value=3)
     
@@ -207,7 +207,6 @@ with tabs[2]:
         }
     }
 
-    # Session state
     if 'asist_paso' not in st.session_state:
         st.session_state.asist_paso = 1
     if 'asist_modelo' not in st.session_state:
@@ -227,7 +226,7 @@ with tabs[2]:
     if st.session_state.asist_paso == 1:
         st.markdown("<h4 style='color:#0277bd'>1️⃣ Selecciona el tipo de modelo</h4>", unsafe_allow_html=True)
         for nombre, data in modelos.items():
-            if st.button(f"Elegir {nombre}"):
+            if st.button(f"Elegir {nombre}", key=f"asist_elegir_{nombre}"):
                 st.session_state.asist_modelo = nombre
                 st.session_state.asist_paso = 2
                 st.session_state.asist_lambda = None
@@ -237,44 +236,46 @@ with tabs[2]:
                 st.session_state.asist_result = None
         for nombre, data in modelos.items():
             st.markdown(
-                f"<div style='background-color:#e3f2fd; padding:10px; margin-bottom:5px; border-radius:8px;'>"
-                f"<b style='color:#01579b;'>{nombre}</b>: <span style='color:#37474f'>{data['desc']}</span><br>"
-                f"<span style='color:#0d47a1'>{data['ej']}</span></div>", unsafe_allow_html=True)
+                f"<div style='background-color:#e3f2fd; padding:10px; margin-bottom:8px; border-radius:8px;'>"
+                f"<b style='color:#01579b;font-size:18px;'>{nombre}</b>: "
+                f"<span style='color:#263238;font-size:16px;'>{data['desc']}</span><br>"
+                f"<span style='color:#1565c0; font-size:15px;'>{data['ej']}</span></div>",
+                unsafe_allow_html=True)
         st.markdown(
-            "<div style='background-color:#1565c0;padding:10px;border-radius:8px;color:white'><b>💡 Elige el modelo que más se parece a tu situación real.</b></div>",
+            "<div style='background-color:#1565c0;padding:10px;border-radius:8px;color:white;font-size:15px;'><b>💡 Elige el modelo que más se parece a tu situación real.</b></div>",
             unsafe_allow_html=True)
 
     # Paso 2: Lambda
     elif st.session_state.asist_paso == 2:
-        st.markdown("<h4 style='color:#0277bd'>2️⃣ Ingresa la tasa de llegada λ (lambda)</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color:#0277bd'>2️⃣ Ingresa la tasa de llegada lambda</h4>", unsafe_allow_html=True)
         st.markdown("""
         <div style='background-color:#f3e5f5;padding:10px;border-radius:8px;'>
-        <b style='color:#6a1b9a'>¿Qué es λ?</b> Es el <b>número promedio de clientes</b> que llegan por unidad de tiempo.<br>
-        <b>Ejemplo:</b> Si cada 2 minutos llegan 4 personas, entonces λ = 2 por minuto.<br>
-        <span style='color:#00897b;font-weight:bold;'>TIP:</span> Piensa: ¿cuántos clientes nuevos llegan en 1 hora? Divide por 60 si quieres el valor por minuto.
+        <b style='color:#6a1b9a'>¿Qué es lambda?</b> Es el <b>número promedio de clientes</b> que llegan por unidad de tiempo.<br>
+        <b>Ejemplo:</b> Si cada 2 minutos llegan 4 personas, entonces lambda = 2 por minuto.<br>
+        <span style='color:#00897b;font-weight:bold;'>TIP:</span> ¿Cuántos clientes llegan en 1 hora? Divide por 60 si quieres el valor por minuto.
         </div>
         """, unsafe_allow_html=True)
-        val = st.number_input("λ (tasa de llegada)", min_value=0.01, value=1.0, format="%.2f", key="asist_lambda")
+        val = st.number_input("lambda (tasa de llegada)", min_value=0.01, value=1.0, format="%.2f", key="asist_lambda_input")
         col1, col2 = st.columns(2)
-        if col1.button("Siguiente ➡️", key="asist_siguiente_lambda"):
+        if col1.button("Siguiente ➡️", key="asist_siguiente_lambda_paso2"):
             st.session_state.asist_lambda = val
             st.session_state.asist_paso = 3
-        if col2.button("⬅️ Volver", key="asist_volver_modelo"):
+        if col2.button("⬅️ Volver", key="asist_volver_modelo_paso2"):
             st.session_state.asist_paso = 1
 
     # Paso 3: Mu
     elif st.session_state.asist_paso == 3:
-        st.markdown("<h4 style='color:#0277bd'>3️⃣ Ingresa la tasa de servicio μ (mu)</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color:#0277bd'>3️⃣ Ingresa la tasa de servicio mu</h4>", unsafe_allow_html=True)
         st.markdown("""
         <div style='background-color:#fff9c4;padding:10px;border-radius:8px;'>
-        <b style='color:#f57c00'>¿Qué es μ?</b> Es el <b>número promedio de clientes</b> que un servidor puede atender por unidad de tiempo.<br>
-        <b>Ejemplo:</b> Si cada médico atiende 5 personas por hora, entonces μ = 5 por hora.<br>
-        <span style='color:#00897b;font-weight:bold;'>TIP:</span> Si tienes varios servidores y todos atienden igual, pon la tasa individual aquí. Si no, selecciona el modelo c adecuado y lo sumas después.
+        <b style='color:#f57c00'>¿Qué es mu?</b> Es el <b>número promedio de clientes</b> que un servidor puede atender por unidad de tiempo.<br>
+        <b>Ejemplo:</b> Si cada médico atiende 5 personas por hora, entonces mu = 5 por hora.<br>
+        <span style='color:#00897b;font-weight:bold;'>TIP:</span> Si tienes varios servidores y todos atienden igual, pon la tasa individual aquí.
         </div>
         """, unsafe_allow_html=True)
-        val = st.number_input("μ (tasa de servicio)", min_value=0.01, value=2.0, format="%.2f", key="asist_mu")
+        val = st.number_input("mu (tasa de servicio)", min_value=0.01, value=2.0, format="%.2f", key="asist_mu_input")
         col1, col2 = st.columns(2)
-        if col1.button("Siguiente ➡️", key="asist_siguiente_mu"):
+        if col1.button("Siguiente ➡️", key="asist_siguiente_mu_paso3"):
             st.session_state.asist_mu = val
             if st.session_state.asist_modelo in ["M/M/c", "M/M/c/K"]:
                 st.session_state.asist_paso = 4
@@ -282,7 +283,7 @@ with tabs[2]:
                 st.session_state.asist_paso = 5
             else:
                 st.session_state.asist_paso = 6
-        if col2.button("⬅️ Volver", key="asist_volver_lambda"):
+        if col2.button("⬅️ Volver", key="asist_volver_lambda_paso3"):
             st.session_state.asist_paso = 2
 
     # Paso 4: c (servidores)
@@ -292,18 +293,18 @@ with tabs[2]:
         <div style='background-color:#ffe0b2;padding:10px;border-radius:8px;'>
         <b style='color:#bf360c'>¿Qué es c?</b> Es el <b>número de servidores o puestos</b> que atienden simultáneamente.<br>
         <b>Ejemplo:</b> 4 ventanillas en un banco, c = 4.<br>
-        <span style='color:#00897b;font-weight:bold;'>TIP:</span> Si tienes un solo servidor, pon c=1 y te recomendamos usar M/M/1.
+        <span style='color:#00897b;font-weight:bold;'>TIP:</span> Si tienes un solo servidor, pon c=1 y usa el modelo M/M/1.
         </div>
         """, unsafe_allow_html=True)
-        val = st.number_input("Cantidad de servidores (c)", min_value=1, value=2, step=1, key="asist_c")
+        val = st.number_input("Cantidad de servidores (c)", min_value=1, value=2, step=1, key="asist_c_input")
         col1, col2 = st.columns(2)
-        if col1.button("Siguiente ➡️", key="asist_siguiente_c"):
+        if col1.button("Siguiente ➡️", key="asist_siguiente_c_paso4"):
             st.session_state.asist_c = val
             if st.session_state.asist_modelo == "M/M/c/K":
                 st.session_state.asist_paso = 5
             else:
                 st.session_state.asist_paso = 6
-        if col2.button("⬅️ Volver", key="asist_volver_mu"):
+        if col2.button("⬅️ Volver", key="asist_volver_mu_paso4"):
             st.session_state.asist_paso = 3
 
     # Paso 5: K (capacidad máxima)
@@ -317,12 +318,12 @@ with tabs[2]:
         </div>
         """, unsafe_allow_html=True)
         min_c = int(st.session_state.asist_c) if st.session_state.asist_c else 1
-        val = st.number_input("Capacidad total (K)", min_value=min_c, value=min_c + 3, step=1, key="asist_K")
+        val = st.number_input("Capacidad total (K)", min_value=min_c, value=min_c + 3, step=1, key="asist_K_input")
         col1, col2 = st.columns(2)
-        if col1.button("Siguiente ➡️", key="asist_siguiente_K"):
+        if col1.button("Siguiente ➡️", key="asist_siguiente_K_paso5"):
             st.session_state.asist_K = val
             st.session_state.asist_paso = 6
-        if col2.button("⬅️ Volver", key="asist_volver_cK"):
+        if col2.button("⬅️ Volver", key="asist_volver_cK_paso5"):
             if st.session_state.asist_modelo == "M/M/1/K":
                 st.session_state.asist_paso = 3
             else:
@@ -372,7 +373,7 @@ with tabs[2]:
         except Exception as ex:
             st.error(f"Error en el cálculo: {ex}")
         col1, col2 = st.columns(2)
-        if col1.button("Nuevo cálculo", key="asist_nuevo"):
+        if col1.button("Nuevo cálculo", key="asist_nuevo_paso6"):
             st.session_state.asist_paso = 1
             st.session_state.asist_modelo = None
             st.session_state.asist_lambda = None
@@ -380,7 +381,7 @@ with tabs[2]:
             st.session_state.asist_c = None
             st.session_state.asist_K = None
             st.session_state.asist_result = None
-        if col2.button("⬅️ Volver al último dato", key="asist_volver_result"):
+        if col2.button("⬅️ Volver al último dato", key="asist_volver_result_paso6"):
             if modelo in ["M/M/1"]:
                 st.session_state.asist_paso = 3
             elif modelo == "M/M/c":
@@ -389,3 +390,4 @@ with tabs[2]:
                 st.session_state.asist_paso = 5
             elif modelo == "M/M/c/K":
                 st.session_state.asist_paso = 5
+
