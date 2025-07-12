@@ -192,8 +192,6 @@ with tabs[1]:
         )
     except Exception as ex:
         st.error(f"Error: {ex}")
-)
-
 # -------- PESTAÑA 3: ASISTENTE 
 with tabs[2]:
     st.header("Asistente Virtual - Modelos de Colas")
