@@ -6,17 +6,17 @@ from fpdf import FPDF
 # --- Diccionario de explicaciones ---
 EXPLICACIONES = {
     "Modelo": "Tipo de sistema de colas utilizado",
-    "lambda": "λ — Tasa de llegada (clientes por unidad de tiempo)",
-    "mu": "μ — Tasa de servicio (clientes atendidos por servidor por unidad de tiempo)",
+    "lambda": "lambda — Tasa de llegada (clientes por unidad de tiempo)",
+    "mu": "mu — Tasa de servicio (clientes atendidos por servidor por unidad de tiempo)",
     "c": "c — Número de servidores",
     "K": "K — Capacidad máxima total del sistema (incluye en servicio y en cola)",
-    "rho": "ρ — Utilización del sistema (porcentaje de tiempo ocupado)",
-    "P0": "P₀ — Probabilidad de que no haya clientes en el sistema",
+    "rho": "rho — Utilización del sistema (porcentaje de tiempo ocupado)",
+    "P0": "P0 — Probabilidad de que no haya clientes en el sistema",
     "Lq": "Lq — Número promedio de clientes en la cola",
     "Ls": "Ls — Número promedio de clientes en el sistema (cola + servicio)",
     "Wq": "Wq — Tiempo promedio en cola (espera)",
     "Ws": "Ws — Tiempo promedio en el sistema (espera + servicio)",
-    "lambda_eff": "λₑff — Tasa efectiva de llegada (clientes que realmente entran al sistema)",
+    "lambda_eff": "lambda_eff — Tasa efectiva de llegada (clientes que realmente entran al sistema)",
     "Distribucion": "Distribución de probabilidad P(n) y acumulada para cada número de clientes en el sistema"
 }
 
@@ -104,7 +104,7 @@ st.title("Simulador de Colas y Monte Carlo")
 
 tabs = st.tabs(["Modelos de Colas", "Simulación Monte Carlo", "Asistente"])
 
-# -------- PESTAÑA 1: MODELOS CLÁSICOS (igual que antes)
+# -------- PESTAÑA 1: MODELOS CLÁSICOS
 with tabs[0]:
     st.header("Simulación de Modelos de Colas")
     lmbda = st.number_input("λ (Tasa de llegada)", min_value=0.01, value=1.5, format="%.2f")
@@ -182,32 +182,32 @@ with tabs[1]:
         except Exception as ex:
             st.error(f"Error: {ex}")
 
-# -------- PESTAÑA 3: ASISTENTE MEJORADO PASO A PASO Y HUMANO
+# -------- PESTAÑA 3: ASISTENTE MEJORADO
 
 with tabs[2]:
-    st.markdown("<h2 style='color:#0099ff'>Asistente Virtual 🤖</h2>", unsafe_allow_html=True)
-    st.markdown("> **¡Resuelve tu problema de colas paso a paso!**\n")
+    st.markdown("<h2 style='color:#0d47a1;font-weight:bold'>Asistente Virtual 👨‍💻</h2>", unsafe_allow_html=True)
+    st.markdown("> <span style='color:#1565c0;font-weight:bold'>¡Sigue los pasos para resolver tu problema de colas!</span>", unsafe_allow_html=True)
 
     modelos = {
         "M/M/1": {
             "desc": "Un solo servidor, cola ilimitada.",
-            "ej": "🧑‍💼 Ejemplo: Un cajero atendiendo en un banco sin límite de espera."
+            "ej": "🧑‍💼 <b>Ejemplo:</b> Un cajero atendiendo en un banco sin límite de espera."
         },
         "M/M/1/K": {
             "desc": "Un solo servidor, capacidad limitada.",
-            "ej": "🪑 Ejemplo: Sala de espera con solo 5 asientos."
+            "ej": "🪑 <b>Ejemplo:</b> Sala de espera con solo 5 asientos."
         },
         "M/M/c": {
             "desc": "Varios servidores, cola ilimitada.",
-            "ej": "🏢 Ejemplo: 3 médicos atendiendo pacientes en una clínica."
+            "ej": "🏢 <b>Ejemplo:</b> 3 médicos atendiendo pacientes en una clínica."
         },
         "M/M/c/K": {
             "desc": "Varios servidores, capacidad limitada.",
-            "ej": "📞 Ejemplo: 5 líneas en un call center con máximo 10 personas en total."
+            "ej": "📞 <b>Ejemplo:</b> 5 líneas en un call center con máximo 10 personas en total."
         }
     }
 
-    # Variables de control de paso
+    # Session state
     if 'asist_paso' not in st.session_state:
         st.session_state.asist_paso = 1
     if 'asist_modelo' not in st.session_state:
@@ -225,7 +225,7 @@ with tabs[2]:
 
     # Paso 1: Modelo
     if st.session_state.asist_paso == 1:
-        st.subheader("1️⃣ Selecciona el tipo de modelo")
+        st.markdown("<h4 style='color:#0277bd'>1️⃣ Selecciona el tipo de modelo</h4>", unsafe_allow_html=True)
         for nombre, data in modelos.items():
             if st.button(f"Elegir {nombre}"):
                 st.session_state.asist_modelo = nombre
@@ -237,20 +237,21 @@ with tabs[2]:
                 st.session_state.asist_result = None
         for nombre, data in modelos.items():
             st.markdown(
-                f"<div style='background-color:#e0f7fa; padding:12px; margin-bottom:6px; border-radius:8px;'>"
-                f"<b style='color:#008080;'>{nombre}</b>: {data['desc']}<br>"
-                f"<span style='color:#0099ff'>{data['ej']}</span></div>", unsafe_allow_html=True)
-        st.info("💡 Elige el modelo que más se parece a tu situación real.")
+                f"<div style='background-color:#e3f2fd; padding:10px; margin-bottom:5px; border-radius:8px;'>"
+                f"<b style='color:#01579b;'>{nombre}</b>: <span style='color:#37474f'>{data['desc']}</span><br>"
+                f"<span style='color:#0d47a1'>{data['ej']}</span></div>", unsafe_allow_html=True)
+        st.markdown(
+            "<div style='background-color:#1565c0;padding:10px;border-radius:8px;color:white'><b>💡 Elige el modelo que más se parece a tu situación real.</b></div>",
+            unsafe_allow_html=True)
 
     # Paso 2: Lambda
     elif st.session_state.asist_paso == 2:
-        st.subheader("2️⃣ Ingresa la tasa de llegada λ")
+        st.markdown("<h4 style='color:#0277bd'>2️⃣ Ingresa la tasa de llegada λ (lambda)</h4>", unsafe_allow_html=True)
         st.markdown("""
-        <div style='color:#00695c;'>
-        <b>¿Qué es λ?</b> Es el <b>número promedio de clientes</b> que llegan por unidad de tiempo.<br>
-        <b>Ejemplo:</b> Si cada 2 minutos llegan 4 personas, entonces λ = 2 por minuto.
-        <br><br>
-        <b style='color:#ff9800;'>TIP:</b> Piensa: ¿cuántos clientes nuevos llegan en 1 hora? Divide por 60 si quieres el valor por minuto.
+        <div style='background-color:#f3e5f5;padding:10px;border-radius:8px;'>
+        <b style='color:#6a1b9a'>¿Qué es λ?</b> Es el <b>número promedio de clientes</b> que llegan por unidad de tiempo.<br>
+        <b>Ejemplo:</b> Si cada 2 minutos llegan 4 personas, entonces λ = 2 por minuto.<br>
+        <span style='color:#00897b;font-weight:bold;'>TIP:</span> Piensa: ¿cuántos clientes nuevos llegan en 1 hora? Divide por 60 si quieres el valor por minuto.
         </div>
         """, unsafe_allow_html=True)
         val = st.number_input("λ (tasa de llegada)", min_value=0.01, value=1.0, format="%.2f", key="asist_lambda")
@@ -263,12 +264,12 @@ with tabs[2]:
 
     # Paso 3: Mu
     elif st.session_state.asist_paso == 3:
-        st.subheader("3️⃣ Ingresa la tasa de servicio μ")
+        st.markdown("<h4 style='color:#0277bd'>3️⃣ Ingresa la tasa de servicio μ (mu)</h4>", unsafe_allow_html=True)
         st.markdown("""
-        <div style='color:#1a237e;'>
-        <b>¿Qué es μ?</b> Es el <b>número promedio de clientes</b> que un servidor puede atender por unidad de tiempo.<br>
+        <div style='background-color:#fff9c4;padding:10px;border-radius:8px;'>
+        <b style='color:#f57c00'>¿Qué es μ?</b> Es el <b>número promedio de clientes</b> que un servidor puede atender por unidad de tiempo.<br>
         <b>Ejemplo:</b> Si cada médico atiende 5 personas por hora, entonces μ = 5 por hora.<br>
-        <b style='color:#ff9800;'>TIP:</b> Si hay varios servidores y atienden igual, pon la tasa individual aquí. Si no, elige el modelo c adecuado y lo sumas después.
+        <span style='color:#00897b;font-weight:bold;'>TIP:</span> Si tienes varios servidores y todos atienden igual, pon la tasa individual aquí. Si no, selecciona el modelo c adecuado y lo sumas después.
         </div>
         """, unsafe_allow_html=True)
         val = st.number_input("μ (tasa de servicio)", min_value=0.01, value=2.0, format="%.2f", key="asist_mu")
@@ -286,12 +287,12 @@ with tabs[2]:
 
     # Paso 4: c (servidores)
     elif st.session_state.asist_paso == 4:
-        st.subheader("4️⃣ Ingresa la cantidad de servidores c")
+        st.markdown("<h4 style='color:#0277bd'>4️⃣ Ingresa la cantidad de servidores c</h4>", unsafe_allow_html=True)
         st.markdown("""
-        <div style='color:#bf360c;'>
-        <b>¿Qué es c?</b> Es el <b>número de servidores o puestos</b> que atienden simultáneamente.<br>
+        <div style='background-color:#ffe0b2;padding:10px;border-radius:8px;'>
+        <b style='color:#bf360c'>¿Qué es c?</b> Es el <b>número de servidores o puestos</b> que atienden simultáneamente.<br>
         <b>Ejemplo:</b> 4 ventanillas en un banco, c = 4.<br>
-        <b style='color:#ff9800;'>TIP:</b> Si tienes un solo servidor, pon c=1 y te recomendamos usar M/M/1.
+        <span style='color:#00897b;font-weight:bold;'>TIP:</span> Si tienes un solo servidor, pon c=1 y te recomendamos usar M/M/1.
         </div>
         """, unsafe_allow_html=True)
         val = st.number_input("Cantidad de servidores (c)", min_value=1, value=2, step=1, key="asist_c")
@@ -307,12 +308,12 @@ with tabs[2]:
 
     # Paso 5: K (capacidad máxima)
     elif st.session_state.asist_paso == 5:
-        st.subheader("5️⃣ Ingresa la capacidad máxima del sistema K")
+        st.markdown("<h4 style='color:#0277bd'>5️⃣ Ingresa la capacidad máxima del sistema K</h4>", unsafe_allow_html=True)
         st.markdown("""
-        <div style='color:#33691e;'>
-        <b>¿Qué es K?</b> Es el <b>máximo número de personas</b> que pueden estar en el sistema (esperando + en servicio).<br>
+        <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
+        <b style='color:#388e3c'>¿Qué es K?</b> Es el <b>máximo número de personas</b> que pueden estar en el sistema (esperando + en servicio).<br>
         <b>Ejemplo:</b> 1 cajero y 5 sillas: K = 6.<br>
-        <b style='color:#ff9800;'>TIP:</b> Si no hay límite, usa los modelos sin K.
+        <span style='color:#00897b;font-weight:bold;'>TIP:</span> Si no hay límite, usa los modelos sin K.
         </div>
         """, unsafe_allow_html=True)
         min_c = int(st.session_state.asist_c) if st.session_state.asist_c else 1
@@ -329,7 +330,7 @@ with tabs[2]:
 
     # Paso 6: Resultados
     elif st.session_state.asist_paso == 6:
-        st.markdown("<h3 style='color:#43a047'>Resultados y análisis 📊</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color:#388e3c'>Resultados y análisis 📊</h3>", unsafe_allow_html=True)
         modelo = st.session_state.asist_modelo
         lmbda = float(st.session_state.asist_lambda)
         mu = float(st.session_state.asist_mu)
