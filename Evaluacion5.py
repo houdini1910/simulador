@@ -6,17 +6,17 @@ from fpdf import FPDF
 # --- Diccionario de explicaciones ---
 EXPLICACIONES = {
     "Modelo": "Tipo de sistema de colas utilizado",
-    "lambda": "lambda — Tasa de llegada (clientes por unidad de tiempo)",
-    "mu": "mu — Tasa de servicio (clientes atendidos por servidor por unidad de tiempo)",
-    "c": "c — Número de servidores",
-    "K": "K — Capacidad máxima total del sistema (incluye en servicio y en cola)",
-    "rho": "rho — Utilización del sistema (porcentaje de tiempo ocupado)",
-    "P0": "P0 — Probabilidad de que no haya clientes en el sistema",
-    "Lq": "Lq — Número promedio de clientes en la cola",
-    "Ls": "Ls — Número promedio de clientes en el sistema (cola + servicio)",
-    "Wq": "Wq — Tiempo promedio en cola (espera)",
-    "Ws": "Ws — Tiempo promedio en el sistema (espera + servicio)",
-    "lambda_eff": "lambda_eff — Tasa efectiva de llegada (clientes que realmente entran al sistema)",
+    "lambda": "lambda - Tasa de llegada (clientes por unidad de tiempo)",
+    "mu": "mu - Tasa de servicio (clientes atendidos por servidor por unidad de tiempo)",
+    "c": "c - Número de servidores",
+    "K": "K - Capacidad máxima total del sistema (incluye en servicio y en cola)",
+    "rho": "rho - Utilización del sistema (porcentaje de tiempo ocupado)",
+    "P0": "P0 - Probabilidad de que no haya clientes en el sistema",
+    "Lq": "Lq - Número promedio de clientes en la cola",
+    "Ls": "Ls - Número promedio de clientes en el sistema (cola + servicio)",
+    "Wq": "Wq - Tiempo promedio en cola (espera)",
+    "Ws": "Ws - Tiempo promedio en el sistema (espera + servicio)",
+    "lambda_eff": "lambda_eff - Tasa efectiva de llegada (clientes que realmente entran al sistema)",
     "Distribucion": "Distribución de probabilidad P(n) y acumulada para cada número de clientes en el sistema"
 }
 
@@ -67,6 +67,10 @@ def calcular_mmck(lmbda, mu, c, K):
             "lambda_eff": lambda_eff, "Distribucion": list(zip(P, cumul))}
 
 # ------ PDF GENERATION ------
+def strip_unicode(text):
+    # Elimina guiones largos, etc.
+    return str(text).replace("—", "-").replace("–", "-").replace("λ", "lambda").replace("μ", "mu")
+
 def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
     pdf = FPDF()
     pdf.add_page()
@@ -79,8 +83,8 @@ def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
                 v_str = f"{v:.4f}"
             else:
                 v_str = str(v)
-            nombre = EXPLICACIONES.get(k, k)
-            pdf.cell(0, 8, f"{nombre}: {v_str}", ln=1)
+            nombre = strip_unicode(EXPLICACIONES.get(k, k))
+            pdf.cell(0, 8, f"{nombre}: {strip_unicode(v_str)}", ln=1)
     pdf.ln(5)
     if "Distribucion" in result_dict:
         dist = result_dict["Distribucion"]
@@ -185,7 +189,7 @@ with tabs[1]:
 # -------- PESTAÑA 3: ASISTENTE MEJORADO
 
 with tabs[2]:
-    st.markdown("<h2 style='color:#0d47a1;font-weight:bold'>Asistente Virtual 👨‍💻</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#0d47a1;font-weight:bold'>Asistente Virtual 👩‍💻</h2>", unsafe_allow_html=True)
     st.markdown("> <span style='color:#1565c0;font-weight:bold'>¡Sigue los pasos para resolver tu problema de colas!</span>", unsafe_allow_html=True)
 
     modelos = {
@@ -250,9 +254,10 @@ with tabs[2]:
         st.markdown("<h4 style='color:#0277bd'>2️⃣ Ingresa la tasa de llegada lambda</h4>", unsafe_allow_html=True)
         st.markdown("""
         <div style='background-color:#f3e5f5;padding:10px;border-radius:8px;'>
-        <b style='color:#6a1b9a'>¿Qué es lambda?</b> Es el <b>número promedio de clientes</b> que llegan por unidad de tiempo.<br>
+        <b style='color:#6a1b9a'>¿Qué es lambda?</b>
+        <span style='color:#222'> Es el número promedio de clientes que llegan por unidad de tiempo.<br>
         <b>Ejemplo:</b> Si cada 2 minutos llegan 4 personas, entonces lambda = 2 por minuto.<br>
-        <span style='color:#00897b;font-weight:bold;'>TIP:</span> ¿Cuántos clientes llegan en 1 hora? Divide por 60 si quieres el valor por minuto.
+        <b style='color:#00897b;'>TIP:</b> ¿Cuántos clientes llegan en 1 hora? Divide por 60 si quieres el valor por minuto.</span>
         </div>
         """, unsafe_allow_html=True)
         val = st.number_input("lambda (tasa de llegada)", min_value=0.01, value=1.0, format="%.2f", key="asist_lambda_input")
@@ -268,9 +273,10 @@ with tabs[2]:
         st.markdown("<h4 style='color:#0277bd'>3️⃣ Ingresa la tasa de servicio mu</h4>", unsafe_allow_html=True)
         st.markdown("""
         <div style='background-color:#fff9c4;padding:10px;border-radius:8px;'>
-        <b style='color:#f57c00'>¿Qué es mu?</b> Es el <b>número promedio de clientes</b> que un servidor puede atender por unidad de tiempo.<br>
+        <b style='color:#f57c00'>¿Qué es mu?</b>
+        <span style='color:#333'> Es el número promedio de clientes que un servidor puede atender por unidad de tiempo.<br>
         <b>Ejemplo:</b> Si cada médico atiende 5 personas por hora, entonces mu = 5 por hora.<br>
-        <span style='color:#00897b;font-weight:bold;'>TIP:</span> Si tienes varios servidores y todos atienden igual, pon la tasa individual aquí.
+        <b style='color:#00897b;'>TIP:</b> Si tienes varios servidores y todos atienden igual, pon la tasa individual aquí.</span>
         </div>
         """, unsafe_allow_html=True)
         val = st.number_input("mu (tasa de servicio)", min_value=0.01, value=2.0, format="%.2f", key="asist_mu_input")
@@ -291,9 +297,10 @@ with tabs[2]:
         st.markdown("<h4 style='color:#0277bd'>4️⃣ Ingresa la cantidad de servidores c</h4>", unsafe_allow_html=True)
         st.markdown("""
         <div style='background-color:#ffe0b2;padding:10px;border-radius:8px;'>
-        <b style='color:#bf360c'>¿Qué es c?</b> Es el <b>número de servidores o puestos</b> que atienden simultáneamente.<br>
+        <b style='color:#bf360c'>¿Qué es c?</b>
+        <span style='color:#212121'> Es el número de servidores o puestos que atienden simultáneamente.<br>
         <b>Ejemplo:</b> 4 ventanillas en un banco, c = 4.<br>
-        <span style='color:#00897b;font-weight:bold;'>TIP:</span> Si tienes un solo servidor, pon c=1 y usa el modelo M/M/1.
+        <b style='color:#00897b;'>TIP:</b> Si tienes un solo servidor, pon c=1 y usa el modelo M/M/1.</span>
         </div>
         """, unsafe_allow_html=True)
         val = st.number_input("Cantidad de servidores (c)", min_value=1, value=2, step=1, key="asist_c_input")
@@ -312,9 +319,10 @@ with tabs[2]:
         st.markdown("<h4 style='color:#0277bd'>5️⃣ Ingresa la capacidad máxima del sistema K</h4>", unsafe_allow_html=True)
         st.markdown("""
         <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
-        <b style='color:#388e3c'>¿Qué es K?</b> Es el <b>máximo número de personas</b> que pueden estar en el sistema (esperando + en servicio).<br>
+        <b style='color:#388e3c'>¿Qué es K?</b>
+        <span style='color:#232'> Es el máximo número de personas que pueden estar en el sistema (esperando + en servicio).<br>
         <b>Ejemplo:</b> 1 cajero y 5 sillas: K = 6.<br>
-        <span style='color:#00897b;font-weight:bold;'>TIP:</span> Si no hay límite, usa los modelos sin K.
+        <b style='color:#00897b;'>TIP:</b> Si no hay límite, usa los modelos sin K.</span>
         </div>
         """, unsafe_allow_html=True)
         min_c = int(st.session_state.asist_c) if st.session_state.asist_c else 1
@@ -333,12 +341,12 @@ with tabs[2]:
     elif st.session_state.asist_paso == 6:
         st.markdown("<h3 style='color:#388e3c'>Resultados y análisis 📊</h3>", unsafe_allow_html=True)
         modelo = st.session_state.asist_modelo
-        lmbda = float(st.session_state.asist_lambda)
-        mu = float(st.session_state.asist_mu)
-        c = int(st.session_state.asist_c) if st.session_state.asist_c else 1
-        K = int(st.session_state.asist_K) if st.session_state.asist_K else None
-        resultado = None
         try:
+            lmbda = float(st.session_state.asist_lambda) if st.session_state.asist_lambda is not None else 1.0
+            mu = float(st.session_state.asist_mu) if st.session_state.asist_mu is not None else 1.0
+            c = int(st.session_state.asist_c) if st.session_state.asist_c else 1
+            K = int(st.session_state.asist_K) if st.session_state.asist_K else None
+            resultado = None
             if modelo == "M/M/1":
                 resultado = calcular_mm1(lmbda, mu)
             elif modelo == "M/M/c":
