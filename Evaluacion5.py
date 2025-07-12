@@ -1,3 +1,10 @@
+
+
+import streamlit as st
+import numpy as np
+from math import factorial
+from fpdf import FPDF
+
 st.markdown("""
     <style>
     [data-testid="stHeadingLink"] {
@@ -6,11 +13,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-
-import streamlit as st
-import numpy as np
-from math import factorial
-from fpdf import FPDF
 
 # --- Diccionario de explicaciones ---
 EXPLICACIONES = {
