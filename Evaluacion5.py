@@ -55,13 +55,14 @@ def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, "Reporte de Simulación de Colas", ln=1, align='C')
+    pdf.cell(200, 10, "Reporte de Simulacion de Colas", ln=1, align='C')
     pdf.ln(10)
     for k, v in result_dict.items():
         # Reemplazar TODOS los caracteres unicode que pueden fallar
         k_str = str(k)
         k_str = k_str.replace("λ", "lambda")
         k_str = k_str.replace("μ", "mu")
+        k_str = k_str.replace("ρ", "rho")
         k_str = k_str.replace("ó", "o")
         k_str = k_str.replace("é", "e")
         k_str = k_str.replace("á", "a")
@@ -76,7 +77,6 @@ def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
             pdf.cell(200, 8, f"{k_str}: {round(v,4) if isinstance(v, float) else v}", ln=1)
     b = pdf.output(dest='S').encode('latin1')
     return b
-
 
 # ------ MANUAL ------
 def mostrar_manual():
