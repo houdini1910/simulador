@@ -162,37 +162,64 @@ with tabs[1]:
         except Exception as ex:
             st.error(f"Error: {ex}")
 
-# -------- PESTAÑA 3: ASISTENTE (Wizard paso a paso)
+# -------- PESTAÑA 3: ASISTENTE 
 with tabs[2]:
     st.header("Asistente Virtual - Modelos de Colas")
 
-    paso = st.session_state.get('paso', 1)
+    
     if 'paso' not in st.session_state:
         st.session_state.paso = 1
+    if 'lmbda_asist' not in st.session_state:
+        st.session_state.lmbda_asist = 1.0
+    if 'mu_asist' not in st.session_state:
+        st.session_state.mu_asist = 2.0
+    if 'c_asist' not in st.session_state:
+        st.session_state.c_asist = 1
+    if 'limitar_asist' not in st.session_state:
+        st.session_state.limitar_asist = False
+    if 'k_asist' not in st.session_state:
+        st.session_state.k_asist = 4
 
-    if paso == 1:
-        lmbda_asist = st.number_input("Paso 1: Ingresa la tasa de llegada λ", min_value=0.01, value=1.0, key="lmbda_asist")
+    if st.session_state.paso == 1:
+        st.session_state.lmbda_asist = st.number_input(
+            "Paso 1: Ingresa la tasa de llegada λ", min_value=0.01, value=st.session_state.lmbda_asist, key="lmbda_asist_input")
         if st.button("Siguiente", key="btn1"):
             st.session_state.paso = 2
+            st.experimental_rerun()
 
-    if paso >= 2:
-        mu_asist = st.number_input("Paso 2: Ingresa la tasa de servicio μ", min_value=0.01, value=2.0, key="mu_asist")
+    if st.session_state.paso >= 2:
+        st.session_state.mu_asist = st.number_input(
+            "Paso 2: Ingresa la tasa de servicio μ", min_value=0.01, value=st.session_state.mu_asist, key="mu_asist_input")
         if st.button("Siguiente", key="btn2"):
             st.session_state.paso = 3
+            st.experimental_rerun()
 
-    if paso >= 3:
-        c_asist = st.number_input("Paso 3: Ingresa la cantidad de servidores c", min_value=1, value=1, step=1, key="c_asist")
-        limitar_asist = st.checkbox("¿Limitar capacidad de la cola?", key="limitar_asist")
-        if limitar_asist:
-            k_asist = st.number_input("Capacidad total K", min_value=int(c_asist), value=int(c_asist)+3, step=1, key="k_asist")
-        else:
-            k_asist = None
+    if st.session_state.paso >= 3:
+        st.session_state.c_asist = st.number_input(
+            "Paso 3: Ingresa la cantidad de servidores c", min_value=1, value=st.session_state.c_asist, step=1, key="c_asist_input")
+        st.session_state.limitar_asist = st.checkbox(
+            "¿Limitar capacidad de la cola?", value=st.session_state.limitar_asist, key="limitar_asist_checkbox")
+        if st.session_state.limitar_asist:
+            st.session_state.k_asist = st.number_input(
+                "Capacidad total K", min_value=int(st.session_state.c_asist), value=st.session_state.k_asist, step=1, key="k_asist_input")
         if st.button("Calcular Resultado (Asistente)", key="btn3"):
             try:
-                if limitar_asist:
-                    res = calcular_mmck(st.session_state.lmbda_asist, st.session_state.mu_asist, int(st.session_state.c_asist), int(st.session_state.k_asist))
+                if st.session_state.limitar_asist:
+                    res = calcular_mmck(
+                        st.session_state.lmbda_asist,
+                        st.session_state.mu_asist,
+                        int(st.session_state.c_asist),
+                        int(st.session_state.k_asist)
+                    )
                 else:
-                    res = calcular_mm1(st.session_state.lmbda_asist, st.session_state.mu_asist) if int(st.session_state.c_asist) == 1 else calcular_mmc(st.session_state.lmbda_asist, st.session_state.mu_asist, int(st.session_state.c_asist))
+                    res = calcular_mm1(
+                        st.session_state.lmbda_asist,
+                        st.session_state.mu_asist
+                    ) if int(st.session_state.c_asist) == 1 else calcular_mmc(
+                        st.session_state.lmbda_asist,
+                        st.session_state.mu_asist,
+                        int(st.session_state.c_asist)
+                    )
                 st.success("¡Cálculo realizado!")
                 for k, v in res.items():
                     if k == "Distribución":
@@ -207,7 +234,14 @@ with tabs[2]:
 
     if st.button("Reiniciar Asistente"):
         st.session_state.paso = 1
+        # Opcional: reiniciar valores
+        st.session_state.lmbda_asist = 1.0
+        st.session_state.mu_asist = 2.0
+        st.session_state.c_asist = 1
+        st.session_state.limitar_asist = False
+        st.session_state.k_asist = 4
         st.experimental_rerun()
+
 
 # -------- PESTAÑA 4: AYUDA
 with tabs[3]:
