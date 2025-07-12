@@ -166,32 +166,37 @@ with tabs[1]:
     lmbda_mc = st.number_input("λ (tasa promedio)", min_value=0.01, value=1.0, format="%.2f")
     n_vars = st.number_input("Cantidad de variables a simular", min_value=1, value=5)
     n_obs = st.number_input("Cantidad de observaciones", min_value=1, value=3)
+    
     if st.button("Simular Monte Carlo"):
-    try:
-        if dist == "Poisson":
-            resultados = np.random.poisson(lmbda_mc, size=(n_obs, n_vars))
-        else:
-            resultados = np.random.exponential(1/lmbda_mc, size=(n_obs, n_vars))
-        st.write("**Primeras 5 simulaciones:**")
-        st.write(resultados[:5])
-        st.info(f"Media total: {np.mean(resultados):.4f}")
-        st.info(f"Desviación estándar: {np.std(resultados):.4f}")
+        try:
+            # Generar resultados según la distribución seleccionada
+            if dist == "Poisson":
+                resultados = np.random.poisson(lmbda_mc, size=(n_obs, n_vars))
+            else:
+                resultados = np.random.exponential(1/lmbda_mc, size=(n_obs, n_vars))
 
-        # ---- SOLO ESTO PARA CSV ----
-        # Si quieres encabezado de columnas:
-        header = ','.join([f"Var{i+1}" for i in range(resultados.shape[1])])
-        csv_lines = [header]
-        for fila in resultados:
-            csv_lines.append(','.join([str(x) for x in fila]))
-        csv_data = '\n'.join(csv_lines)
-        st.download_button(
-            label="Descargar resultados (CSV)",
-            data=csv_data,
-            file_name="resultados_montecarlo.csv",
-            mime="text/csv"
-        )
-    except Exception as ex:
-        st.error(f"Error: {ex}")
+            st.write("**Primeras 5 simulaciones:**")
+            st.write(resultados[:5])
+
+            st.info(f"Media total: {np.mean(resultados):.4f}")
+            st.info(f"Desviación estándar: {np.std(resultados):.4f}")
+
+            # ---- Generar CSV con encabezados ----
+            encabezado = ','.join([f"Var{i+1}" for i in range(resultados.shape[1])])
+            lineas = [encabezado]
+            for fila in resultados:
+                lineas.append(','.join([str(x) for x in fila]))
+            csv_data = '\n'.join(lineas)
+
+            st.download_button(
+                label="Descargar resultados (CSV)",
+                data=csv_data,
+                file_name="resultados_montecarlo.csv",
+                mime="text/csv"
+            )
+        except Exception as ex:
+            st.error(f"Error: {ex}")
+
 # -------- PESTAÑA 3: ASISTENTE 
 with tabs[2]:
     st.header("Asistente Virtual - Modelos de Colas")
