@@ -3,6 +3,23 @@ import numpy as np
 from math import factorial
 from fpdf import FPDF
 
+# --- Diccionario de explicaciones ---
+EXPLICACIONES = {
+    "Modelo": "Tipo de sistema de colas utilizado",
+    "lambda": "λ — Tasa de llegada (clientes por unidad de tiempo)",
+    "mu": "μ — Tasa de servicio (clientes atendidos por servidor por unidad de tiempo)",
+    "c": "c — Número de servidores",
+    "K": "K — Capacidad máxima total del sistema (incluye en servicio y en cola)",
+    "rho": "ρ — Utilización del sistema",
+    "P0": "P₀ — Probabilidad de que no haya clientes en el sistema",
+    "Lq": "Lq — Número promedio de clientes en la cola",
+    "Ls": "Ls — Número promedio de clientes en el sistema (cola + servicio)",
+    "Wq": "Wq — Tiempo promedio en cola (espera)",
+    "Ws": "Ws — Tiempo promedio en el sistema (espera + servicio)",
+    "lambda_eff": "λₑff — Tasa efectiva de llegada (clientes que realmente entran al sistema)",
+    "Distribucion": "Distribución de probabilidad P(n) y acumulada para cada número de clientes en el sistema"
+}
+
 st.set_page_config(page_title="Simulador de Colas y Monte Carlo", layout="centered")
 
 # ------ FUNCIONES DE CÁLCULO ------
@@ -62,7 +79,8 @@ def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
                 v_str = f"{v:.4f}"
             else:
                 v_str = str(v)
-            pdf.cell(0, 8, f"{k}: {v_str}", ln=1)
+            nombre = EXPLICACIONES.get(k, k)
+            pdf.cell(0, 8, f"{nombre}: {v_str}", ln=1)
     pdf.ln(5)
     if "Distribucion" in result_dict:
         dist = result_dict["Distribucion"]
@@ -108,13 +126,15 @@ with tabs[0]:
                 resultado = calcular_mm1(lmbda, mu) if int(c) == 1 else calcular_mmc(lmbda, mu, int(c))
             st.success("¡Cálculo realizado con éxito!")
             for k, v in resultado.items():
+                nombre = EXPLICACIONES.get(k, k)
                 if k == "Distribucion":
-                    st.write("**Distribución P(n) y acumulada:**")
+                    st.markdown(f"**{nombre}:**")
                     st.table(
                         [{"n": i, "P(n)": round(p,4), "Acumulada": round(ac,4)} for i, (p, ac) in enumerate(v)]
                     )
                 else:
-                    st.write(f"**{k}:** {round(v, 4) if isinstance(v, float) else v}")
+                    valor = f"{v:.4f}" if isinstance(v, float) else v
+                    st.markdown(f"**{nombre}:** {valor}")
             if resultado:
                 pdf_bytes = generar_pdf(resultado)
                 st.download_button(
@@ -240,13 +260,15 @@ with tabs[2]:
         res = st.session_state.resultado_asistente
         st.success("¡Cálculo realizado!")
         for k, v in res.items():
+            nombre = EXPLICACIONES.get(k, k)
             if k == "Distribucion":
-                st.write("**Distribución P(n) y acumulada:**")
+                st.markdown(f"**{nombre}:**")
                 st.table(
                     [{"n": i, "P(n)": round(p,4), "Acumulada": round(ac,4)} for i, (p, ac) in enumerate(v)]
                 )
             else:
-                st.write(f"**{k}:** {round(v, 4) if isinstance(v, float) else v}")
+                valor = f"{v:.4f}" if isinstance(v, float) else v
+                st.markdown(f"**{nombre}:** {valor}")
 
         if st.button("Realizar otro cálculo"):
             st.session_state.paso = 1
@@ -259,4 +281,3 @@ with tabs[2]:
             st.session_state.modelo_asist = None
             if "resultado_asistente" in st.session_state:
                 del st.session_state.resultado_asistente
-
