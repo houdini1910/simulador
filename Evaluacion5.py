@@ -49,14 +49,13 @@ def calcular_mmck(lmbda, mu, c, K):
             "P0": P0, "Lq": Lq, "Ls": Ls, "Wq": Wq, "Ws": Ws,
             "lambda_eff": lambda_eff, "Distribucion": list(zip(P, cumul))}
 
-# ------ PDF GENERATION (formato bonito, sin símbolos griegos) ------
+# ------ PDF GENERATION ------
 def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
     pdf.cell(200, 10, "Reporte de Simulacion de Colas", ln=1, align='C')
     pdf.ln(8)
-    # Datos generales
     for k, v in result_dict.items():
         if k != "Distribucion":
             if isinstance(v, float):
@@ -65,7 +64,6 @@ def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
                 v_str = str(v)
             pdf.cell(0, 8, f"{k}: {v_str}", ln=1)
     pdf.ln(5)
-    # Tabla de Distribucion
     if "Distribucion" in result_dict:
         dist = result_dict["Distribucion"]
         pdf.set_font("Arial", size=11, style='B')
@@ -164,78 +162,97 @@ with tabs[1]:
         except Exception as ex:
             st.error(f"Error: {ex}")
 
-# -------- PESTAÑA 3: ASISTENTE (Wizard paso a paso)
+# -------- PESTAÑA 3: ASISTENTE (wizard con selección de modelo)
 with tabs[2]:
     st.header("Asistente Virtual - Modelos de Colas")
+    st.markdown("Sigue los pasos para resolver tu problema de colas.")
 
-    # Inicialización segura
+    modelos = {
+        "M/M/1": {"desc": "Un servidor, cola infinita", "ej": "Ideal para: Un cajero, un médico, un mecánico"},
+        "M/M/1/K": {"desc": "Un servidor, capacidad limitada", "ej": "Ideal para: Sala de espera con asientos limitados"},
+        "M/M/c": {"desc": "Múltiples servidores, cola infinita", "ej": "Ideal para: Múltiples cajeros, varios médicos"},
+        "M/M/c/K": {"desc": "Múltiples servidores, capacidad limitada", "ej": "Ideal para: Call center con líneas limitadas"}
+    }
+
     if 'paso' not in st.session_state:
         st.session_state.paso = 1
-    if 'lmbda_asist' not in st.session_state:
-        st.session_state.lmbda_asist = 1.0
-    if 'mu_asist' not in st.session_state:
-        st.session_state.mu_asist = 2.0
-    if 'c_asist' not in st.session_state:
-        st.session_state.c_asist = 1
-    if 'limitar_asist' not in st.session_state:
-        st.session_state.limitar_asist = False
-    if 'k_asist' not in st.session_state:
-        st.session_state.k_asist = 4
+    if 'modelo_asist' not in st.session_state:
+        st.session_state.modelo_asist = None
 
     if st.session_state.paso == 1:
-        st.session_state.lmbda_asist = st.number_input(
-            "Paso 1: Ingresa la tasa de llegada λ", min_value=0.01, value=st.session_state.lmbda_asist, key="lmbda_asist_input")
-        if st.button("Siguiente", key="btn1"):
+        st.subheader("Paso 1: Selecciona el tipo de modelo")
+        cols = st.columns(2)
+        seleccion = None
+        with cols[0]:
+            if st.button("M/M/1"):
+                seleccion = "M/M/1"
+        with cols[1]:
+            if st.button("M/M/1/K"):
+                seleccion = "M/M/1/K"
+        with cols[0]:
+            if st.button("M/M/c"):
+                seleccion = "M/M/c"
+        with cols[1]:
+            if st.button("M/M/c/K"):
+                seleccion = "M/M/c/K"
+        if seleccion:
+            st.session_state.modelo_asist = seleccion
             st.session_state.paso = 2
+            st.experimental_rerun()
+        for k, v in modelos.items():
+            st.write(f"**{k}** — {v['desc']}")
+            st.caption(v["ej"])
+    
+    # Paso 2: Pedir parámetros según modelo
+    if st.session_state.paso == 2:
+        modelo = st.session_state.modelo_asist
+        st.success(f"Modelo seleccionado: {modelo}")
+        lmbda = st.number_input("λ (Tasa de llegada)", min_value=0.01, value=1.0, format="%.2f", key="lmbda_asistente")
+        mu = st.number_input("μ (Tasa de servicio)", min_value=0.01, value=2.0, format="%.2f", key="mu_asistente")
+        c = 1
+        K = None
+        if modelo in ["M/M/c", "M/M/c/K"]:
+            c = st.number_input("Cantidad de servidores (c)", min_value=1, value=2, step=1, key="c_asistente")
+        if modelo in ["M/M/1/K", "M/M/c/K"]:
+            K = st.number_input("Capacidad total (K)", min_value=int(c), value=int(c)+3, step=1, key="k_asistente")
 
-    if st.session_state.paso >= 2:
-        st.session_state.mu_asist = st.number_input(
-            "Paso 2: Ingresa la tasa de servicio μ", min_value=0.01, value=st.session_state.mu_asist, key="mu_asist_input")
-        if st.button("Siguiente", key="btn2"):
-            st.session_state.paso = 3
-
-    if st.session_state.paso >= 3:
-        st.session_state.c_asist = st.number_input(
-            "Paso 3: Ingresa la cantidad de servidores c", min_value=1, value=st.session_state.c_asist, step=1, key="c_asist_input")
-        st.session_state.limitar_asist = st.checkbox(
-            "¿Limitar capacidad de la cola?", value=st.session_state.limitar_asist, key="limitar_asist_checkbox")
-        if st.session_state.limitar_asist:
-            st.session_state.k_asist = st.number_input(
-                "Capacidad total K", min_value=int(st.session_state.c_asist), value=st.session_state.k_asist, step=1, key="k_asist_input")
-        if st.button("Calcular Resultado (Asistente)", key="btn3"):
+        if st.button("Calcular resultado", key="btn_asistente_calc"):
             try:
-                if st.session_state.limitar_asist:
-                    res = calcular_mmck(
-                        st.session_state.lmbda_asist,
-                        st.session_state.mu_asist,
-                        int(st.session_state.c_asist),
-                        int(st.session_state.k_asist)
-                    )
+                if modelo == "M/M/1":
+                    res = calcular_mm1(lmbda, mu)
+                elif modelo == "M/M/c":
+                    res = calcular_mmc(lmbda, mu, int(c))
+                elif modelo == "M/M/1/K":
+                    res = calcular_mmck(lmbda, mu, 1, int(K))
+                elif modelo == "M/M/c/K":
+                    res = calcular_mmck(lmbda, mu, int(c), int(K))
                 else:
-                    res = calcular_mm1(
-                        st.session_state.lmbda_asist,
-                        st.session_state.mu_asist
-                    ) if int(st.session_state.c_asist) == 1 else calcular_mmc(
-                        st.session_state.lmbda_asist,
-                        st.session_state.mu_asist,
-                        int(st.session_state.c_asist)
-                    )
-                st.success("¡Cálculo realizado!")
-                for k, v in res.items():
-                    if k == "Distribucion":
-                        st.write("**Distribución P(n) y acumulada:**")
-                        st.table(
-                            [{"n": i, "P(n)": round(p,4), "Acumulada": round(ac,4)} for i, (p, ac) in enumerate(v)]
-                        )
-                    else:
-                        st.write(f"**{k}:** {round(v, 4) if isinstance(v, float) else v}")
+                    res = {}
+                st.session_state.resultado_asistente = res
+                st.session_state.paso = 3
+                st.experimental_rerun()
             except Exception as ex:
                 st.error(f"Error: {ex}")
 
-    if st.button("Reiniciar Asistente"):
-        st.session_state.paso = 1
-        st.session_state.lmbda_asist = 1.0
-        st.session_state.mu_asist = 2.0
-        st.session_state.c_asist = 1
-        st.session_state.limitar_asist = False
-        st.session_state.k_asist = 4
+        if st.button("Volver al paso anterior"):
+            st.session_state.paso = 1
+            st.experimental_rerun()
+
+    # Paso 3: Mostrar resultados
+    if st.session_state.paso == 3:
+        res = st.session_state.resultado_asistente
+        st.success("¡Cálculo realizado!")
+        for k, v in res.items():
+            if k == "Distribucion":
+                st.write("**Distribución P(n) y acumulada:**")
+                st.table(
+                    [{"n": i, "P(n)": round(p,4), "Acumulada": round(ac,4)} for i, (p, ac) in enumerate(v)]
+                )
+            else:
+                st.write(f"**{k}:** {round(v, 4) if isinstance(v, float) else v}")
+
+        if st.button("Realizar otro cálculo"):
+            st.session_state.paso = 1
+            st.session_state.modelo_asist = None
+            st.session_state.resultado_asistente = None
+            st.experimental_rerun()
