@@ -56,27 +56,40 @@ def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
     pdf.add_page()
     pdf.set_font("Arial", size=12)
     pdf.cell(200, 10, "Reporte de Simulacion de Colas", ln=1, align='C')
-    pdf.ln(10)
+    pdf.ln(8)
+    # Primero los datos generales
     for k, v in result_dict.items():
-        # Reemplazar TODOS los caracteres unicode que pueden fallar
         k_str = str(k)
-        k_str = k_str.replace("λ", "lambda")
-        k_str = k_str.replace("μ", "mu")
-        k_str = k_str.replace("ρ", "rho")
-        k_str = k_str.replace("ó", "o")
-        k_str = k_str.replace("é", "e")
-        k_str = k_str.replace("á", "a")
-        k_str = k_str.replace("í", "i")
-        k_str = k_str.replace("ú", "u")
-        k_str = k_str.replace("ñ", "n")
-        if k_str == "Distribución":
-            pdf.cell(200, 8, "Distribucion P(n) y acumulada:", ln=1)
-            for i, (p, ac) in enumerate(v):
-                pdf.cell(200, 8, f"n={i}: P={round(p,4)}, Acumulada={round(ac,4)}", ln=1)
-        else:
-            pdf.cell(200, 8, f"{k_str}: {round(v,4) if isinstance(v, float) else v}", ln=1)
+        k_str = k_str.replace("λ", "lambda").replace("μ", "mu").replace("ρ", "rho")
+        k_str = (k_str.replace("ó","o").replace("é","e").replace("á","a")
+                        .replace("í","i").replace("ú","u").replace("ñ","n"))
+        if k_str != "Distribucion" and k_str != "Distribución":
+            if isinstance(v, float):
+                v_str = f"{v:.4f}"
+            else:
+                v_str = str(v)
+            pdf.cell(0, 8, f"{k_str}: {v_str}", ln=1)
+    pdf.ln(5)
+    # Ahora la tabla de distribucion
+    if "Distribucion" in result_dict or "Distribución" in result_dict:
+        dist = result_dict.get("Distribucion") or result_dict.get("Distribución")
+        pdf.set_font("Arial", size=11, style='B')
+        pdf.cell(0, 8, "Distribucion P(n) y acumulada:", ln=1)
+        pdf.set_font("Arial", size=11)
+        # Cabecera
+        pdf.cell(20, 8, "n", border=1)
+        pdf.cell(40, 8, "P(n)", border=1)
+        pdf.cell(40, 8, "Acumulada", border=1)
+        pdf.ln()
+        # Filas
+        for i, (p, ac) in enumerate(dist):
+            pdf.cell(20, 8, f"{i}", border=1)
+            pdf.cell(40, 8, f"{p:.4f}", border=1)
+            pdf.cell(40, 8, f"{ac:.4f}", border=1)
+            pdf.ln()
     b = pdf.output(dest='S').encode('latin1')
     return b
+
 
 # ------ MANUAL ------
 def mostrar_manual():
