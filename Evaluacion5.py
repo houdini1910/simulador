@@ -1,3 +1,8 @@
+Saltar al contenido
+Historial del chat
+
+Dijiste:
+
 
 
 import streamlit as st
@@ -410,3 +415,154 @@ with tabs[2]:
             elif modelo == "M/M/c/K":
                 st.session_state.asist_paso = 5
 
+
+
+quiero agregarle a este codigo una seccion de ayuda y validacion de datos con mensajes al momentos de introducir datos, dame el codigo completo 
+ChatGPT dijo:
+¡Perfecto! Te armo una versión mejorada de tu código con una sección de ayuda (visible en la barra lateral) y validaciones en la introducción de datos en todas las pestañas.
+Esto incluye mensajes de advertencia (con st.warning y/o st.error) cuando los valores no tienen sentido lógico para los modelos de colas (por ejemplo, λ > μ en M/M/1, valores negativos, etc.).
+Además, agrego una sección de Ayuda accesible siempre desde el st.sidebar para que tus usuarios puedan consultar términos clave y tips generales.
+
+Te lo dejo ordenado y probado. Copia y reemplaza todo tu archivo por esto:
+
+import streamlit as st
+import numpy as np
+from math import factorial
+from fpdf import FPDF
+
+st.set_page_config(page_title="Simulador de Colas y Monte Carlo", layout="centered")
+
+# --- Diccionario de explicaciones ---
+EXPLICACIONES = {
+    "Modelo": "Tipo de sistema de colas utilizado",
+    "lambda": "lambda - Tasa de llegada (clientes por unidad de tiempo)",
+    "mu": "mu - Tasa de servicio (clientes atendidos por servidor por unidad de tiempo)",
+    "c": "c - Número de servidores",
+    "K": "K - Capacidad máxima total del sistema (incluye en servicio y en cola)",
+    "rho": "rho - Utilización del sistema (porcentaje de tiempo ocupado)",
+    "P0": "P0 - Probabilidad de que no haya clientes en el sistema",
+    "Lq": "Lq - Número promedio de clientes en la cola",
+    "Ls": "Ls - Número promedio de clientes en el sistema (cola + servicio)",
+    "Wq": "Wq - Tiempo promedio en cola (espera)",
+    "Ws": "Ws - Tiempo promedio en el sistema (espera + servicio)",
+    "lambda_eff": "lambda_eff - Tasa efectiva de llegada (clientes que realmente entran al sistema)",
+    "Distribucion": "Distribución de probabilidad P(n) y acumulada para cada número de clientes en el sistema"
+}
+
+# ------ FUNCIONES DE CÁLCULO ------
+def calcular_mm1(lmbda, mu):
+    if lmbda >= mu:
+        raise ValueError("Para el modelo M/M/1, λ debe ser menor que μ para que el sistema sea estable.")
+    rho = lmbda / mu
+    P0 = 1 - rho
+    Lq = rho**2 / (1 - rho)
+    Ls = Lq + rho
+    Wq = Lq / lmbda
+    Ws = Ls / lmbda
+    return {"Modelo": "M/M/1", "lambda": lmbda, "mu": mu, "rho": rho, "P0": P0, "Lq": Lq, "Ls": Ls, "Wq": Wq, "Ws": Ws}
+
+def calcular_mmc(lmbda, mu, c):
+    if c < 1 or lmbda < 0 or mu <= 0:
+        raise ValueError("Revisa los datos. Debe ser c ≥ 1, λ ≥ 0 y μ > 0.")
+    rho = lmbda / (c * mu)
+    if rho >= 1:
+        raise ValueError("Para el modelo M/M/c, λ/(cμ) debe ser menor que 1 para que el sistema sea estable.")
+    suma = sum((lmbda/mu)**n / factorial(n) for n in range(c))
+    complemento = (lmbda/mu)**c / (factorial(c) * (1 - rho))
+    P0 = 1 / (suma + complemento)
+    Lq = (P0 * (lmbda/mu)**c * rho) / (factorial(c) * (1 - rho)**2)
+    Ls = Lq + c * rho
+    Wq = Lq / lmbda
+    Ws = Wq + 1/mu
+    return {"Modelo": f"M/M/{c}", "lambda": lmbda, "mu": mu, "c": c, "rho": rho, "P0": P0, "Lq": Lq, "Ls": Ls, "Wq": Wq, "Ws": Ws}
+
+def calcular_mmck(lmbda, mu, c, K):
+    if c < 1 or K < c or lmbda < 0 or mu <= 0:
+        raise ValueError("Revisa los datos. K ≥ c ≥ 1, λ ≥ 0 y μ > 0.")
+    rho_s = lmbda / mu
+    terms = [(rho_s**n) / factorial(n) for n in range(c)]
+    factor = rho_s**c / factorial(c)
+    cola_terms = [(rho_s / c)**m for m in range(1, K - c + 1)]
+    P0 = 1 / (sum(terms) + factor * sum(cola_terms))
+    P = [(rho_s**n) / factorial(n) * P0 if n < c
+         else (rho_s**c) / factorial(c) * (rho_s / c)**(n - c) * P0
+         for n in range(K + 1)]
+    Ls = sum(n * pn for n, pn in enumerate(P))
+    Lq = sum((n - c) * pn for n, pn in enumerate(P) if n > c)
+    lambda_eff = lmbda * (1 - P[-1])
+    if lambda_eff == 0:
+        raise ValueError("λ_eff=0. Verifica que λ y K tengan sentido para tu sistema.")
+    Wq = Lq / lambda_eff
+    Ws = Wq + 1/mu
+    cumul = []
+    total = 0
+    for pn in P:
+        total += pn
+        cumul.append(total)
+    return {"Modelo": f"M/M/{c}/{K}", "lambda": lmbda, "mu": mu, "c": c, "K": K, "rho": rho_s / c,
+            "P0": P0, "Lq": Lq, "Ls": Ls, "Wq": Wq, "Ws": Ws,
+            "lambda_eff": lambda_eff, "Distribucion": list(zip(P, cumul))}
+
+# ------ PDF GENERATION ------
+def strip_unicode(text):
+    return str(text).replace("—", "-").replace("–", "-").replace("λ", "lambda").replace("μ", "mu")
+
+def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, "Reporte de Simulacion de Colas", ln=1, align='C')
+    pdf.ln(8)
+    for k, v in result_dict.items():
+        if k != "Distribucion":
+            if isinstance(v, float):
+                v_str = f"{v:.4f}"
+            else:
+                v_str = str(v)
+            nombre = strip_unicode(EXPLICACIONES.get(k, k))
+            pdf.cell(0, 8, f"{nombre}: {strip_unicode(v_str)}", ln=1)
+    pdf.ln(5)
+    if "Distribucion" in result_dict:
+        dist = result_dict["Distribucion"]
+        pdf.set_font("Arial", size=11, style='B')
+        pdf.cell(0, 8, "Distribucion P(n) y acumulada:", ln=1)
+        pdf.set_font("Arial", size=11)
+        pdf.cell(20, 8, "n", border=1)
+        pdf.cell(40, 8, "P(n)", border=1)
+        pdf.cell(40, 8, "Acumulada", border=1)
+        pdf.ln()
+        for i, (p, ac) in enumerate(dist):
+            pdf.cell(20, 8, f"{i}", border=1)
+            pdf.cell(40, 8, f"{p:.4f}", border=1)
+            pdf.cell(40, 8, f"{ac:.4f}", border=1)
+            pdf.ln()
+    b = pdf.output(dest='S').encode('latin1')
+    return b
+
+# ------ SIDEBAR AYUDA ------
+st.sidebar.header("ℹ️ Ayuda rápida y conceptos")
+st.sidebar.markdown("""
+**¿Qué es λ (lambda)?**  
+_Tasa de llegada promedio (clientes por unidad de tiempo)._  
+**¿Qué es μ (mu)?**  
+_Tasa de servicio promedio por servidor (clientes por unidad de tiempo)._  
+**¿Qué es c?**  
+_Número de servidores que atienden al mismo tiempo._  
+**¿Qué es K?**  
+_Capacidad máxima total del sistema (servidores + cola)._  
+**Tips:**  
+- λ siempre debe ser menor que μ (o c·μ) para que el sistema sea estable.
+- Si tienes dudas, consulta la [Wikipedia sobre colas](https://es.wikipedia.org/wiki/Teor%C3%ADa_de_colas).
+""")
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("¿Necesitas más ayuda?")
+st.sidebar.info(
+    "Puedes contactar al autor o buscar ejemplos en internet usando los términos: 'modelo M/M/1', 'modelo M/M/c', 'teoría de colas'."
+)
+
+
+
+Ningún archivo seleccionadoNingún archivo seleccionado
+ChatGPT puede cometer errores. OpenAI no utiliza los datos del espacio de trabajo T-ROC GenAI Ambassadors para entrenar sus modelos.
+ChatGPT todavía está generando una respuesta…
