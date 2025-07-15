@@ -502,7 +502,52 @@ Un **sistema de colas** es un modelo matemático que describe el proceso de lleg
 
 ---
 
-### 6. Esquemas conceptuales (texto)
+### 6. Simulación de Monte Carlo en modelos de colas
+
+La **simulación Monte Carlo** es una técnica que te permite **generar escenarios aleatorios** para estimar el comportamiento de sistemas complejos. En el contexto de colas, se utiliza para **ver cómo se comportarían las llegadas y los servicios si los datos fueran aleatorios** pero respetando ciertas distribuciones de probabilidad.
+
+#### ¿Para qué sirve?
+
+- Para explorar la **variabilidad** y la **incertidumbre** en los modelos.
+- Para practicar cómo se verían los resultados si simularas 100, 1,000 o más llegadas y servicios.
+- Para calcular promedios y desviaciones estándar de los tiempos y la cantidad de clientes en el sistema.
+
+#### Distribuciones más comunes en colas:
+
+- **Poisson:** Modela el número de llegadas por unidad de tiempo (por ejemplo, cuántos clientes llegan cada minuto).
+    - En tu simulador, puedes pedir simular la llegada de clientes con esta distribución.
+- **Exponencial:** Modela el tiempo entre llegadas o entre servicios (tiempo que pasa hasta que llega el siguiente cliente).
+    - En tu simulador, puedes pedir simular estos tiempos aleatorios.
+
+#### Ejemplo de interpretación en tu simulador:
+
+- Si simulas 10 variables con 5 observaciones bajo Poisson (λ = 2), estás generando una tabla de 5 filas x 10 columnas donde cada número representa **cuántos clientes llegaron** en ese periodo de tiempo aleatorio.
+- Si simulas con la distribución Exponencial, cada número es un **tiempo aleatorio de espera** entre llegadas o servicios.
+
+#### ¿Cómo usar la pestaña de Monte Carlo en esta app?
+
+1. **Selecciona la distribución:**  
+   - Elige Poisson si quieres saber cuántos clientes llegan en ciertos intervalos.
+   - Elige Exponencial si quieres saber el tiempo entre llegadas o servicios.
+2. **Configura λ (lambda):**  
+   - Para Poisson, representa el número promedio de llegadas por intervalo.
+   - Para Exponencial, es la tasa promedio de ocurrencia.
+3. **Elige cantidad de variables y observaciones:**  
+   - Variables = número de columnas (puede simular diferentes servidores o periodos).
+   - Observaciones = número de filas (simulaciones independientes).
+4. **Haz clic en “Simular Monte Carlo” y revisa la tabla y estadísticas.**
+
+#### Tips rápidos
+
+- Puedes descargar los resultados en CSV para analizarlos en Excel, Google Sheets o Python.
+- Si repites muchas veces la simulación (muchas observaciones), la **media** tenderá a acercarse a la λ que elegiste.
+- Usar Monte Carlo es útil para ver la dispersión y para enseñar conceptos de aleatoriedad y probabilidad en sistemas de colas.
+
+#### Recursos extra
+
+- [Simulación Monte Carlo en Wikipedia](https://es.wikipedia.org/wiki/M%C3%A9todo_de_Montecarlo)
+- [Video: ¿Qué es la simulación Monte Carlo? (YouTube)](https://www.youtube.com/results?search_query=simulacion+monte+carlo+explicacion)
+
 
 **M/M/1:**  
 """)
