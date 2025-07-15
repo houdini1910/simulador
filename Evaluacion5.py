@@ -78,7 +78,21 @@ def calcular_mmck(lmbda, mu, c, K):
 
 # ------ PDF GENERATION ------
 def strip_unicode(text):
-    return str(text).replace("—", "-").replace("–", "-").replace("λ", "lambda").replace("μ", "mu")
+    # Convierte símbolos griegos y subíndices a texto plano (ASCII) para PDF
+    return (str(text)
+            .replace("—", "-")
+            .replace("–", "-")
+            .replace("λ", "lambda")
+            .replace("μ", "mu")
+            .replace("ρ", "rho")
+            .replace("₀", "0")
+            .replace("ₑₓₓ", "_eff")
+            .replace("₁", "1")
+            .replace("ₙ", "n")
+            .replace("≤", "<=")
+            .replace("≥", ">=")
+            .replace("°", "o")
+            )
 
 def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
     pdf = FPDF()
@@ -109,7 +123,7 @@ def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
             pdf.cell(40, 8, f"{p:.4f}", border=1)
             pdf.cell(40, 8, f"{ac:.4f}", border=1)
             pdf.ln()
-    b = pdf.output(dest='S').encode('latin1')
+    b = pdf.output(dest='S').encode('utf-8')
     return b
 
 # --- Interfaz principal ---
