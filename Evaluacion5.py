@@ -549,5 +549,5 @@ La **simulación Monte Carlo** es una técnica que te permite **generar escenari
 - [Video: ¿Qué es la simulación Monte Carlo? (YouTube)](https://www.youtube.com/results?search_query=simulacion+monte+carlo+explicacion)
 
 
-**M/M/1:**  
+ 
 """)
