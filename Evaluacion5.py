@@ -505,3 +505,4 @@ Un **sistema de colas** es un modelo matemático que describe el proceso de lleg
 ### 6. Esquemas conceptuales (texto)
 
 **M/M/1:**  
+""")
