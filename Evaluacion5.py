@@ -8,17 +8,17 @@ st.set_page_config(page_title="Simulador de Colas y Monte Carlo", layout="center
 # --- Diccionario de explicaciones ---
 EXPLICACIONES = {
     "Modelo": "Tipo de sistema de colas utilizado",
-    "lambda": "lambda - Tasa de llegada (clientes por unidad de tiempo)",
-    "mu": "mu - Tasa de servicio (clientes atendidos por servidor por unidad de tiempo)",
+    "lambda": "λ (lambda) - Tasa de llegada (clientes por unidad de tiempo)",
+    "mu": "μ (mu) - Tasa de servicio (clientes atendidos por servidor por unidad de tiempo)",
     "c": "c - Número de servidores",
     "K": "K - Capacidad máxima total del sistema (incluye en servicio y en cola)",
-    "rho": "rho - Utilización del sistema (porcentaje de tiempo ocupado)",
-    "P0": "P0 - Probabilidad de que no haya clientes en el sistema",
+    "rho": "ρ (rho) - Utilización del sistema (porcentaje de tiempo ocupado)",
+    "P0": "P₀ - Probabilidad de que no haya clientes en el sistema",
     "Lq": "Lq - Número promedio de clientes en la cola",
     "Ls": "Ls - Número promedio de clientes en el sistema (cola + servicio)",
     "Wq": "Wq - Tiempo promedio en cola (espera)",
     "Ws": "Ws - Tiempo promedio en el sistema (espera + servicio)",
-    "lambda_eff": "lambda_eff - Tasa efectiva de llegada (clientes que realmente entran al sistema)",
+    "lambda_eff": "λₑₓₓ - Tasa efectiva de llegada (clientes que realmente entran al sistema)",
     "Distribucion": "Distribución de probabilidad P(n) y acumulada para cada número de clientes en el sistema"
 }
 
@@ -112,29 +112,7 @@ def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
     b = pdf.output(dest='S').encode('latin1')
     return b
 
-# ------ SIDEBAR AYUDA ------
-st.sidebar.header("ℹ️ Ayuda rápida y conceptos")
-st.sidebar.markdown("""
-**¿Qué es λ (lambda)?**  
-_Tasa de llegada promedio (clientes por unidad de tiempo)._  
-**¿Qué es μ (mu)?**  
-_Tasa de servicio promedio por servidor (clientes por unidad de tiempo)._  
-**¿Qué es c?**  
-_Número de servidores que atienden al mismo tiempo._  
-**¿Qué es K?**  
-_Capacidad máxima total del sistema (servidores + cola)._  
-**Tips:**  
-- λ siempre debe ser menor que μ (o c·μ) para que el sistema sea estable.
-- Si tienes dudas, consulta la [Wikipedia sobre colas](https://es.wikipedia.org/wiki/Teor%C3%ADa_de_colas).
-""")
-
-st.sidebar.markdown("---")
-st.sidebar.subheader("¿Necesitas más ayuda?")
-st.sidebar.info(
-    "Puedes contactar al autor o buscar ejemplos en internet usando los términos: 'modelo M/M/1', 'modelo M/M/c', 'teoría de colas'."
-)
-
-# ------ INTERFAZ PRINCIPAL ------
+# --- Interfaz principal ---
 st.markdown("""
     <style>
     [data-testid="stHeadingLink"] {
@@ -145,7 +123,12 @@ st.markdown("""
 
 st.title("Simulador de Colas y Monte Carlo")
 
-tabs = st.tabs(["Modelos de Colas", "Simulación Monte Carlo", "Asistente"])
+tabs = st.tabs([
+    "Modelos de Colas",
+    "Simulación Monte Carlo",
+    "Asistente",
+    "Ayuda y Conceptos"
+])
 
 # -------- PESTAÑA 1: MODELOS CLÁSICOS
 with tabs[0]:
@@ -464,3 +447,61 @@ with tabs[2]:
                 st.session_state.asist_paso = 5
             elif modelo == "M/M/c/K":
                 st.session_state.asist_paso = 5
+
+# -------- PESTAÑA 4: AYUDA Y CONCEPTOS --------
+with tabs[3]:
+    st.header("Ayuda y Conceptos de Teoría de Colas 📚")
+    st.markdown("""
+### 1. ¿Qué es un modelo de colas?
+Un **sistema de colas** es un modelo matemático que describe el proceso de llegada de clientes a un sistema, su espera (si no hay servidores libres), su atención y salida del sistema.  
+**Ejemplo:** personas haciendo fila para ser atendidas en un banco, llamadas a un call center, o procesos esperando CPU en un servidor.
+
+---
+
+### 2. Parámetros básicos
+
+- **λ (lambda):** Tasa de llegada promedio (clientes por unidad de tiempo).  
+    _Ejemplo: llegan 10 clientes por hora → λ = 10/hora_
+
+- **μ (mu):** Tasa de servicio promedio de cada servidor (clientes por unidad de tiempo).  
+    _Ejemplo: un servidor atiende 12 clientes por hora → μ = 12/hora_
+
+- **c:** Número de servidores en paralelo.
+- **K:** Capacidad máxima del sistema (servidores + clientes esperando).
+
+---
+
+### 3. Modelos clásicos
+
+| Modelo        | Características                                | Ejemplo                                         |
+|---------------|-----------------------------------------------|-------------------------------------------------|
+| M/M/1         | 1 servidor, llegada y servicio exponencial, cola infinita | Cajero único en un banco                        |
+| M/M/1/K       | 1 servidor, capacidad máxima K                | Ventanilla con solo 4 asientos                  |
+| M/M/c         | c servidores, cola infinita                   | 3 médicos en una clínica                        |
+| M/M/c/K       | c servidores, capacidad máxima K              | Call center con 5 líneas y 12 personas máximo   |
+
+---
+
+### 4. Glosario rápido
+
+- **ρ (rho):** Utilización del sistema = λ / (c·μ)
+- **Lq:** Promedio de clientes esperando (en la cola)
+- **Ls:** Promedio de clientes en el sistema (cola + servicio)
+- **Wq:** Tiempo promedio de espera en la cola
+- **Ws:** Tiempo promedio total en el sistema
+
+---
+
+### 5. Tips y advertencias frecuentes
+
+- Para que un sistema sea estable:  
+    - En **M/M/1**: λ < μ  
+    - En **M/M/c**: λ < c·μ
+- Si λ ≥ μ (o c·μ), la cola crecerá indefinidamente (“el sistema se satura”).
+- No uses valores negativos o cero para tasas ni para cantidades de servidores o capacidad.
+
+---
+
+### 6. Esquemas conceptuales (texto)
+
+**M/M/1:**  
