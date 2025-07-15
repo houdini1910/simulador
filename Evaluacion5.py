@@ -78,7 +78,7 @@ def calcular_mmck(lmbda, mu, c, K):
 
 # ------ PDF GENERATION ------
 def strip_unicode(text):
-    # Convierte símbolos griegos y subíndices a texto plano (ASCII) para PDF
+    # Convierte símbolos y letras raras a puro ASCII para PDF
     return (str(text)
             .replace("—", "-")
             .replace("–", "-")
@@ -92,13 +92,14 @@ def strip_unicode(text):
             .replace("≤", "<=")
             .replace("≥", ">=")
             .replace("°", "o")
+            .encode('latin1', errors='ignore').decode('latin1')
             )
 
 def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, "Reporte de Simulacion de Colas", ln=1, align='C')
+    pdf.cell(200, 10, strip_unicode("Reporte de Simulacion de Colas"), ln=1, align='C')
     pdf.ln(8)
     for k, v in result_dict.items():
         if k != "Distribucion":
@@ -112,18 +113,18 @@ def generar_pdf(result_dict, filename="reporte_simulacion.pdf"):
     if "Distribucion" in result_dict:
         dist = result_dict["Distribucion"]
         pdf.set_font("Arial", size=11, style='B')
-        pdf.cell(0, 8, "Distribucion P(n) y acumulada:", ln=1)
+        pdf.cell(0, 8, strip_unicode("Distribucion P(n) y acumulada:"), ln=1)
         pdf.set_font("Arial", size=11)
-        pdf.cell(20, 8, "n", border=1)
-        pdf.cell(40, 8, "P(n)", border=1)
-        pdf.cell(40, 8, "Acumulada", border=1)
+        pdf.cell(20, 8, strip_unicode("n"), border=1)
+        pdf.cell(40, 8, strip_unicode("P(n)"), border=1)
+        pdf.cell(40, 8, strip_unicode("Acumulada"), border=1)
         pdf.ln()
         for i, (p, ac) in enumerate(dist):
             pdf.cell(20, 8, f"{i}", border=1)
             pdf.cell(40, 8, f"{p:.4f}", border=1)
             pdf.cell(40, 8, f"{ac:.4f}", border=1)
             pdf.ln()
-    b = pdf.output(dest='S').encode('utf-8')
+    b = pdf.output(dest='S').encode('latin1')
     return b
 
 # --- Interfaz principal ---
